@@ -1,7 +1,12 @@
+using System.Text.Json;
+using System.Text.RegularExpressions;
+using MessageBus.Api.Models;
+using MessageBus.Api.Services.Interfaces;
+
 namespace MessageBus.Api.Middleware;
 
 /// <summary>
-/// Middleware for API key authentication
+/// Middleware for API key authentication using database-backed application registry
 /// </summary>
 public class ApiKeyAuthMiddleware
 {
@@ -9,6 +14,11 @@ public class ApiKeyAuthMiddleware
     private readonly RequestDelegate _next;
     private readonly ILogger<ApiKeyAuthMiddleware> _logger;
     private readonly IConfiguration _configuration;
+
+    // Regex to extract queue name from path
+    private static readonly Regex QueueNameRegex = new(
+        @"/api/(?:queues|messages)/([^/]+)",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     public ApiKeyAuthMiddleware(
         RequestDelegate next,
@@ -57,7 +67,61 @@ public class ApiKeyAuthMiddleware
             return;
         }
 
-        // Validate the API key
+        // Try database-backed authentication first
+        var applicationService = context.RequestServices.GetService<IApplicationService>();
+        Application? application = null;
+
+        if (applicationService != null)
+        {
+            application = await applicationService.ValidateApiKeyAsync(extractedApiKey.ToString());
+        }
+
+        if (application != null)
+        {
+            // Database-backed authentication succeeded
+            var permissions = ParseJsonArray(application.Permissions);
+            var allowedQueues = ParseJsonArray(application.AllowedQueues);
+
+            // Check permissions
+            if (!HasPermission(permissions, allowedQueues, context.Request.Path, context.Request.Method))
+            {
+                _logger.LogWarning("Application {AppName} lacks permission for {Method} {Path}",
+                    application.Name, context.Request.Method, path);
+                context.Response.StatusCode = 403;
+                await context.Response.WriteAsJsonAsync(new
+                {
+                    error = "Forbidden",
+                    message = "API key does not have permission for this operation."
+                });
+                return;
+            }
+
+            // Add application info to context items for downstream use
+            context.Items["ApiKeyName"] = application.Name;
+            context.Items["ApiKeyPermissions"] = permissions;
+            context.Items["ApplicationId"] = application.Id;
+
+            _logger.LogDebug("Application authenticated: {AppName} for {Method} {Path}",
+                application.Name, context.Request.Method, path);
+
+            // Update last used timestamp (fire and forget)
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await applicationService.UpdateLastUsedAsync(application.Id);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to update LastUsedAt for application {Id}", application.Id);
+                }
+            });
+
+            await _next(context);
+            return;
+        }
+
+        // Fallback to config-based authentication for backwards compatibility
         var validApiKeys = apiKeySettings.GetSection("ValidKeys").Get<List<ApiKeyConfig>>() ?? new();
         var matchedKey = validApiKeys.FirstOrDefault(k =>
             k.Key.Equals(extractedApiKey.ToString(), StringComparison.Ordinal));
@@ -101,7 +165,7 @@ public class ApiKeyAuthMiddleware
         }
 
         // Check permissions for queue operations
-        if (!HasPermission(matchedKey, context.Request.Path, context.Request.Method))
+        if (!HasPermission(matchedKey.Permissions, matchedKey.AllowedQueues, context.Request.Path, context.Request.Method))
         {
             _logger.LogWarning("API key {KeyName} lacks permission for {Method} {Path}",
                 matchedKey.Name, context.Request.Method, path);
@@ -124,10 +188,10 @@ public class ApiKeyAuthMiddleware
         await _next(context);
     }
 
-    private static bool HasPermission(ApiKeyConfig key, PathString path, string method)
+    private bool HasPermission(List<string> permissions, List<string>? allowedQueues, PathString path, string method)
     {
         // If no permissions are specified, allow all (for backwards compatibility)
-        if (key.Permissions == null || key.Permissions.Count == 0)
+        if (permissions == null || permissions.Count == 0)
         {
             return true;
         }
@@ -135,10 +199,21 @@ public class ApiKeyAuthMiddleware
         var pathLower = path.Value?.ToLowerInvariant() ?? "";
         var methodLower = method.ToLowerInvariant();
 
+        // Check queue-specific permissions
+        if (allowedQueues != null && allowedQueues.Count > 0 && !allowedQueues.Contains("*"))
+        {
+            var queueName = ExtractQueueName(pathLower);
+            if (!string.IsNullOrEmpty(queueName) && !allowedQueues.Contains(queueName))
+            {
+                _logger.LogDebug("Queue {QueueName} not in allowed queues list", queueName);
+                return false;
+            }
+        }
+
         // Check for read permission (GET requests)
         if (methodLower == "get")
         {
-            return key.Permissions.Contains("read") || key.Permissions.Contains("*");
+            return permissions.Contains("read") || permissions.Contains("*");
         }
 
         // Check for write permission (POST, PUT, PATCH requests)
@@ -147,26 +222,47 @@ public class ApiKeyAuthMiddleware
             // Special handling for dangerous operations
             if (pathLower.Contains("/purge") || pathLower.Contains("/bulk-purge"))
             {
-                return key.Permissions.Contains("admin") || key.Permissions.Contains("*");
+                return permissions.Contains("admin") || permissions.Contains("*");
             }
 
-            return key.Permissions.Contains("write") ||
-                   key.Permissions.Contains("admin") ||
-                   key.Permissions.Contains("*");
+            return permissions.Contains("write") ||
+                   permissions.Contains("admin") ||
+                   permissions.Contains("*");
         }
 
         // Check for delete permission (DELETE requests)
         if (methodLower == "delete")
         {
-            return key.Permissions.Contains("admin") || key.Permissions.Contains("*");
+            return permissions.Contains("admin") || permissions.Contains("*");
         }
 
         return false;
     }
+
+    private static string? ExtractQueueName(string path)
+    {
+        var match = QueueNameRegex.Match(path);
+        return match.Success ? match.Groups[1].Value : null;
+    }
+
+    private static List<string> ParseJsonArray(string? json)
+    {
+        if (string.IsNullOrEmpty(json))
+            return new List<string>();
+
+        try
+        {
+            return JsonSerializer.Deserialize<List<string>>(json) ?? new List<string>();
+        }
+        catch
+        {
+            return new List<string>();
+        }
+    }
 }
 
 /// <summary>
-/// Configuration for an API key
+/// Configuration for an API key (for backwards compatibility with appsettings.json)
 /// </summary>
 public class ApiKeyConfig
 {

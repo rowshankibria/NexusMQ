@@ -1,4 +1,273 @@
 <div class="settings">
-  <h1>Settings</h1>
-  <p>User roles and settings will be implemented in Phase 11.</p>
+  <header class="settings__header">
+    <h1 class="settings__title">Settings</h1>
+    <p class="settings__subtitle">Configure your application preferences and user mode.</p>
+  </header>
+
+  @if (saveMessage) {
+    <div class="settings__message" [class.settings__message--success]="saveMessageType === 'success'" [class.settings__message--error]="saveMessageType === 'error'">
+      {{ saveMessage }}
+    </div>
+  }
+
+  <div class="settings__content">
+    <!-- User Mode Section -->
+    <section class="settings__section">
+      <app-mode-switch></app-mode-switch>
+    </section>
+
+    <!-- API Key Configuration -->
+    <section class="settings__section">
+      <h3 class="settings__section-title">API Configuration</h3>
+      <p class="settings__section-subtitle">Configure your API key for authenticated access.</p>
+
+      <div class="form-group">
+        <label class="form-label" for="apiKey">API Key</label>
+        <div class="input-group">
+          <input
+            [type]="showApiKey ? 'text' : 'password'"
+            id="apiKey"
+            class="form-input"
+            [(ngModel)]="apiKey"
+            placeholder="Enter your API key"
+          />
+          <button
+            type="button"
+            class="input-group__btn"
+            (click)="toggleApiKeyVisibility()"
+            [attr.aria-label]="showApiKey ? 'Hide API key' : 'Show API key'"
+          >
+            @if (showApiKey) {
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            } @else {
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            }
+          </button>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn--primary" (click)="onApiKeyChange()" [disabled]="!apiKey">
+            Save API Key
+          </button>
+          <button type="button" class="btn btn--secondary" (click)="clearApiKey()" [disabled]="!apiKey">
+            Clear
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Refresh & Display Settings -->
+    <section class="settings__section">
+      <h3 class="settings__section-title">Display Settings</h3>
+      <p class="settings__section-subtitle">Configure refresh intervals and display preferences.</p>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="refreshInterval">Auto-refresh Interval</label>
+          <select
+            id="refreshInterval"
+            class="form-select"
+            [(ngModel)]="userSettings.refreshInterval"
+            (ngModelChange)="onUserSettingsChange()"
+          >
+            @for (option of refreshIntervalOptions; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="pageSize">Default Page Size</label>
+          <select
+            id="pageSize"
+            class="form-select"
+            [(ngModel)]="userSettings.defaultPageSize"
+            (ngModelChange)="onUserSettingsChange()"
+          >
+            @for (size of pageSizeOptions; track size) {
+              <option [value]="size">{{ size }} items</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="theme">Theme</label>
+          <select
+            id="theme"
+            class="form-select"
+            [(ngModel)]="userSettings.theme"
+            (ngModelChange)="onUserSettingsChange()"
+          >
+            @for (option of themeOptions; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Application Registration (Admin only) -->
+    <section class="settings__section settings__section--full">
+      <app-application-registration></app-application-registration>
+    </section>
+
+    <!-- Alert Preferences -->
+    <section class="settings__section">
+      <h3 class="settings__section-title">Alert Preferences</h3>
+      <p class="settings__section-subtitle">Configure which alerts you want to receive.</p>
+
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input
+            type="checkbox"
+            [(ngModel)]="userSettings.alertsEnabled"
+            (ngModelChange)="onUserSettingsChange()"
+          />
+          <span class="checkbox-label__text">Enable alerts</span>
+        </label>
+      </div>
+
+      @if (userSettings.alertsEnabled) {
+        <div class="alert-options">
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                [(ngModel)]="alertPreferences.poisonMessages"
+                (ngModelChange)="onAlertPreferencesChange()"
+              />
+              <span class="checkbox-label__text">Poison message alerts</span>
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                [(ngModel)]="alertPreferences.queueDepthWarning"
+                (ngModelChange)="onAlertPreferencesChange()"
+              />
+              <span class="checkbox-label__text">Queue depth warnings</span>
+            </label>
+            @if (alertPreferences.queueDepthWarning) {
+              <div class="nested-input">
+                <label class="form-label form-label--small" for="queueThreshold">Threshold</label>
+                <input
+                  type="number"
+                  id="queueThreshold"
+                  class="form-input form-input--small"
+                  [(ngModel)]="alertPreferences.queueDepthThreshold"
+                  (ngModelChange)="onAlertPreferencesChange()"
+                  min="1"
+                />
+                <span class="form-hint">messages</span>
+              </div>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                [(ngModel)]="alertPreferences.systemHealthCritical"
+                (ngModelChange)="onAlertPreferencesChange()"
+              />
+              <span class="checkbox-label__text">System health critical alerts</span>
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                [(ngModel)]="alertPreferences.transmissionQueueStuck"
+                (ngModelChange)="onAlertPreferencesChange()"
+              />
+              <span class="checkbox-label__text">Transmission queue stuck alerts</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="notification-options">
+          <h4 class="settings__subsection-title">Notification Methods</h4>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                [(ngModel)]="userSettings.soundEnabled"
+                (ngModelChange)="onUserSettingsChange()"
+              />
+              <span class="checkbox-label__text">Sound notifications</span>
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                [(ngModel)]="userSettings.desktopNotifications"
+                (ngModelChange)="onUserSettingsChange()"
+              />
+              <span class="checkbox-label__text">Desktop notifications</span>
+            </label>
+            @if (!userSettings.desktopNotifications) {
+              <button type="button" class="btn btn--link" (click)="requestNotificationPermission()">
+                Enable desktop notifications
+              </button>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                [(ngModel)]="alertPreferences.emailNotifications"
+                (ngModelChange)="onAlertPreferencesChange()"
+              />
+              <span class="checkbox-label__text">Email notifications</span>
+            </label>
+            @if (alertPreferences.emailNotifications) {
+              <div class="nested-input">
+                <label class="form-label form-label--small" for="emailAddress">Email address</label>
+                <input
+                  type="email"
+                  id="emailAddress"
+                  class="form-input"
+                  [(ngModel)]="alertPreferences.emailAddress"
+                  (ngModelChange)="onAlertPreferencesChange()"
+                  placeholder="your@email.com"
+                />
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </section>
+  </div>
+
+  <!-- Footer Actions -->
+  <footer class="settings__footer">
+    <div class="settings__footer-left">
+      <button type="button" class="btn btn--secondary" (click)="resetToDefaults()">
+        Reset to Defaults
+      </button>
+    </div>
+    <div class="settings__footer-right">
+      @if (isDirty) {
+        <span class="settings__unsaved">Unsaved changes</span>
+        <button type="button" class="btn btn--secondary" (click)="discardChanges()">
+          Discard
+        </button>
+      }
+      <button type="button" class="btn btn--primary" (click)="saveSettings()" [disabled]="!isDirty">
+        Save Settings
+      </button>
+    </div>
+  </footer>
 </div>

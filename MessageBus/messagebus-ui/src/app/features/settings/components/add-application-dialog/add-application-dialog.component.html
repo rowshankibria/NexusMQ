@@ -1,0 +1,149 @@
+<div class="dialog-overlay" (click)="onClose()">
+  <div class="dialog" (click)="$event.stopPropagation()">
+    <div class="dialog__header">
+      <h3>Register New Application</h3>
+      <button class="dialog__close" (click)="onClose()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="dialog__body">
+      @if (error) {
+        <div class="error-message">{{ error }}</div>
+      }
+
+      <div class="form-group">
+        <label for="name">Application Name *</label>
+        <input
+          type="text"
+          id="name"
+          [(ngModel)]="name"
+          placeholder="My Application"
+          [disabled]="loading">
+      </div>
+
+      <div class="form-group">
+        <label for="description">Description</label>
+        <textarea
+          id="description"
+          [(ngModel)]="description"
+          placeholder="Brief description of the application"
+          rows="2"
+          [disabled]="loading"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="contactEmail">Contact Email</label>
+        <input
+          type="email"
+          id="contactEmail"
+          [(ngModel)]="contactEmail"
+          placeholder="admin@example.com"
+          [disabled]="loading">
+      </div>
+
+      <div class="form-group">
+        <label for="expiresAt">Expiration Date (optional)</label>
+        <input
+          type="date"
+          id="expiresAt"
+          [(ngModel)]="expiresAt"
+          [disabled]="loading">
+      </div>
+
+      <div class="form-group">
+        <label>Permissions *</label>
+        <div class="checkbox-group">
+          <label class="checkbox">
+            <input
+              type="checkbox"
+              [(ngModel)]="permissions.read"
+              (ngModelChange)="onPermissionChange('read')"
+              [disabled]="loading">
+            <span class="checkbox__label">Read</span>
+            <span class="checkbox__description">View queues, messages, and statistics</span>
+          </label>
+
+          <label class="checkbox">
+            <input
+              type="checkbox"
+              [(ngModel)]="permissions.write"
+              (ngModelChange)="onPermissionChange('write')"
+              [disabled]="loading">
+            <span class="checkbox__label">Write</span>
+            <span class="checkbox__description">Send messages, pause/resume queues</span>
+          </label>
+
+          <label class="checkbox">
+            <input
+              type="checkbox"
+              [(ngModel)]="permissions.admin"
+              (ngModelChange)="onPermissionChange('admin')"
+              [disabled]="loading">
+            <span class="checkbox__label">Admin</span>
+            <span class="checkbox__description">Delete, purge, and manage applications</span>
+          </label>
+
+          <label class="checkbox checkbox--highlight">
+            <input
+              type="checkbox"
+              [(ngModel)]="permissions.full"
+              (ngModelChange)="onPermissionChange('full')"
+              [disabled]="loading">
+            <span class="checkbox__label">Full Access</span>
+            <span class="checkbox__description">All permissions (read, write, admin)</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Queue Access</label>
+        <div class="radio-group">
+          <label class="radio">
+            <input
+              type="radio"
+              name="queueAccess"
+              [value]="true"
+              [(ngModel)]="allowAllQueues"
+              [disabled]="loading">
+            <span>All queues</span>
+          </label>
+          <label class="radio">
+            <input
+              type="radio"
+              name="queueAccess"
+              [value]="false"
+              [(ngModel)]="allowAllQueues"
+              [disabled]="loading">
+            <span>Specific queues only</span>
+          </label>
+        </div>
+
+        @if (!allowAllQueues) {
+          <div class="form-group nested">
+            <input
+              type="text"
+              [(ngModel)]="allowedQueues"
+              placeholder="Queue1, Queue2, Queue3"
+              [disabled]="loading">
+            <small>Enter queue names separated by commas</small>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="dialog__footer">
+      <button class="btn btn--secondary" (click)="onClose()" [disabled]="loading">Cancel</button>
+      <button class="btn btn--primary" (click)="submit()" [disabled]="loading">
+        @if (loading) {
+          <span class="spinner"></span>
+          Registering...
+        } @else {
+          Register Application
+        }
+      </button>
+    </div>
+  </div>
+</div>

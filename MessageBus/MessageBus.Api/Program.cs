@@ -110,6 +110,7 @@ builder.Services.AddScoped<IServiceRepository, ServiceRepository>();
 builder.Services.AddScoped<IPoisonMessageRepository, PoisonMessageRepository>();
 builder.Services.AddScoped<IConversationRepository, ConversationRepository>();
 builder.Services.AddScoped<IDiagnosticsRepository, DiagnosticsRepository>();
+builder.Services.AddScoped<IApplicationRepository, ApplicationRepository>();
 
 // Register services
 builder.Services.AddScoped<IHealthService, HealthService>();
@@ -119,6 +120,7 @@ builder.Services.AddScoped<IPoisonMessageService, PoisonMessageService>();
 builder.Services.AddScoped<IConversationService, ConversationService>();
 builder.Services.AddScoped<IDiagnosticsService, DiagnosticsService>();
 builder.Services.AddScoped<IAlertService, AlertService>();
+builder.Services.AddScoped<IApplicationService, ApplicationService>();
 
 // Register background services
 builder.Services.AddHostedService<HealthMonitorService>();

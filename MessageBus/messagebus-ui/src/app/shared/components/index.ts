@@ -10,3 +10,5 @@ export { LoadingSpinnerComponent } from './loading-spinner/loading-spinner.compo
 export type { SpinnerSize } from './loading-spinner/loading-spinner.component';
 export { MessageBodyViewerComponent } from './message-body-viewer/message-body-viewer.component';
 export type { ViewMode, ContentType } from './message-body-viewer/message-body-viewer.component';
+export { NavigationComponent } from './navigation/navigation.component';
+export type { NavItem } from './navigation/navigation.component';

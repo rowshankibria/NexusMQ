@@ -3,3 +3,4 @@ export { AuthService } from './auth.service';
 export { ConfigService, AppConfig } from './config.service';
 export { HealthService } from './health.service';
 export { SignalRService } from './signalr.service';
+export { UserModeService, UserMode } from './user-mode.service';

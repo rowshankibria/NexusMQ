@@ -1,0 +1,40 @@
+<div class="mode-switch">
+  <h3 class="mode-switch__title">User Mode</h3>
+  <p class="mode-switch__subtitle">Choose your interface mode based on your role and requirements.</p>
+
+  <div class="mode-options">
+    @for (option of modeOptions; track option.value) {
+      <label
+        class="mode-option"
+        [class.mode-option--selected]="currentMode === option.value"
+      >
+        <input
+          type="radio"
+          name="userMode"
+          [value]="option.value"
+          [checked]="currentMode === option.value"
+          (change)="onModeChange(option.value)"
+          class="mode-option__input"
+        />
+        <div class="mode-option__content">
+          <div class="mode-option__header">
+            <span class="mode-option__radio"></span>
+            <span class="mode-option__label">{{ option.label }}</span>
+            @if (currentMode === option.value) {
+              <span class="mode-option__badge">Active</span>
+            }
+          </div>
+          <p class="mode-option__description">{{ option.description }}</p>
+          <div class="mode-option__features">
+            <span class="mode-option__features-label">Features:</span>
+            <ul class="mode-option__features-list">
+              @for (feature of option.features; track feature) {
+                <li class="mode-option__feature">{{ feature }}</li>
+              }
+            </ul>
+          </div>
+        </div>
+      </label>
+    }
+  </div>
+</div>

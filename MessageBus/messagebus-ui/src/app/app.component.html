@@ -1,1 +1,6 @@
-<router-outlet />
+<div class="app-layout">
+  <app-navigation (sidebarToggled)="onSidebarToggled($event)"></app-navigation>
+  <main class="app-main" [class.app-main--collapsed]="isSidebarCollapsed">
+    <router-outlet />
+  </main>
+</div>

@@ -510,12 +510,228 @@ Implemented comprehensive Diagnostics & Monitoring feature for monitoring Servic
 
 ---
 
+## Phase 11: User Roles & Settings
+**Status:** Complete
+
+Implemented comprehensive user mode system with Simple/Advanced modes, settings persistence, and mode-based navigation visibility.
+
+### Core Services (core/services/)
+| Service | Description |
+|---------|-------------|
+| UserModeService | User mode management with localStorage persistence, reactive mode$ observable, isSimpleMode()/isAdvancedMode() methods |
+
+### Shared Directives (shared/directives/)
+| Directive | Description |
+|-----------|-------------|
+| ShowInModeDirective | Structural directive (*appShowInMode) to conditionally show content based on user mode |
+
+### Shared Components (shared/components/)
+| Component | Description |
+|-----------|-------------|
+| NavigationComponent | Sidebar navigation with mode-based item visibility, collapsible sidebar, mode indicator |
+
+### Settings Feature (features/settings/)
+| Component | Description |
+|-----------|-------------|
+| SettingsComponent | Main settings container with mode switching, API key config, display settings, alert preferences |
+| ModeSwitchComponent | Radio toggle for Simple/Advanced mode with feature descriptions |
+
+| Service | Description |
+|---------|-------------|
+| SettingsService | Settings persistence with localStorage, user settings and alert preferences management |
+
+### User Mode Features
+
+**Simple Mode Restrictions:**
+- Dashboard (full access)
+- Queue Explorer (read-only, no technical details)
+- Diagnostics (read-only, alerts only)
+- Settings (full access)
+- Hidden: Message Sender, Message Inspector, Poison Messages, Conversation Trace
+
+**Advanced Mode Features:**
+- All screens available
+- Full control (send, receive, purge, pause)
+- Access to raw message bodies
+- Full diagnostics and conversation tracing
+- Poison message handling
+
+### Navigation Updates
+- Mode-based menu item visibility
+- Read-only badges for Simple mode restricted features
+- Automatic redirect to Dashboard when switching modes if on restricted page
+- Collapsible sidebar with smooth transitions
+- Mode indicator badge in sidebar
+
+### Settings Persistence
+| Setting | Description |
+|---------|-------------|
+| API Key | Stored in localStorage, masked input with toggle visibility |
+| Refresh Interval | Configurable auto-refresh (10s, 30s, 1m, 2m, 5m) |
+| Default Page Size | Table pagination default (10, 25, 50, 100) |
+| Theme | Light, Dark, or System default |
+| Alerts Enabled | Master toggle for alert notifications |
+| Poison Message Alerts | Alert on poison messages |
+| Queue Depth Warnings | Configurable threshold alerts |
+| System Health Critical | Alert on critical health status |
+| Transmission Queue Stuck | Alert on stuck transmission |
+| Sound Notifications | Browser sound alerts |
+| Desktop Notifications | Browser notification API |
+| Email Notifications | Email alert configuration |
+
+### Models Created
+| Model | Description |
+|-------|-------------|
+| UserMode | Type: 'simple' \| 'advanced' |
+| NavItem | Navigation item with path, label, icon, modes[], badge, readOnly |
+| UserSettings | User display preferences |
+| AlertPreferences | Alert configuration settings |
+| SettingsState | Combined settings state with dirty flag |
+
+---
+
+## Phase 12: External Integration & Client Libraries
+**Status:** Complete
+
+Implemented application registration system, enhanced API key authentication, and client libraries for .NET and npm.
+
+### Backend: Application Registration System
+
+| Component | Location | Description |
+|-----------|----------|-------------|
+| Application Model | Models/Application.cs | Application entity with API key, permissions, allowed queues |
+| RegisterApplicationRequest | Models/Application.cs | Request model for creating applications |
+| UpdateApplicationRequest | Models/Application.cs | Request model for updating applications |
+| ApplicationResponse | Models/Application.cs | Response model with masked API key |
+| RegisterApplicationResponse | Models/Application.cs | Response with full API key (shown once) |
+| RegenerateKeyResponse | Models/Application.cs | Response for key regeneration |
+
+### Repository Layer
+
+| Component | Location | Description |
+|-----------|----------|-------------|
+| IApplicationRepository | Repositories/Interfaces/IApplicationRepository.cs | Interface for application data access |
+| ApplicationRepository | Repositories/ApplicationRepository.cs | EF Core implementation for CRUD operations |
+
+Methods: GetAllAsync, GetByIdAsync, GetByApiKeyAsync, GetByNameAsync, CreateAsync, UpdateAsync, DeleteAsync, UpdateLastUsedAsync, ApiKeyExistsAsync
+
+### Service Layer
+
+| Component | Location | Description |
+|-----------|----------|-------------|
+| IApplicationService | Services/Interfaces/IApplicationService.cs | Interface for application business logic |
+| ApplicationService | Services/ApplicationService.cs | Implementation with API key generation, validation |
+
+Methods: GetAllApplicationsAsync, GetApplicationByIdAsync, RegisterApplicationAsync, UpdateApplicationAsync, DeleteApplicationAsync, RegenerateApiKeyAsync, ValidateApiKeyAsync, UpdateLastUsedAsync
+
+### Controller
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| api/applications | GET | List all applications (masked keys) |
+| api/applications/{id} | GET | Get single application |
+| api/applications | POST | Register new application (returns full key) |
+| api/applications/{id} | PUT | Update application |
+| api/applications/{id} | DELETE | Delete application |
+| api/applications/{id}/regenerate-key | POST | Generate new API key |
+
+### Middleware Enhancement
+
+ApiKeyAuthMiddleware enhanced to:
+- Query ApplicationRepository for database-backed API keys
+- Fall back to config-based keys for backwards compatibility
+- Check AllowedQueues for queue-specific permissions
+- Update LastUsedAt timestamp on successful auth
+- Extract queue name from path for permission validation
+
+### Database
+
+| File | Description |
+|------|-------------|
+| Database/Tables/Applications.sql | Creates dbo.Applications table with JSON columns for permissions/queues |
+| Data/MessageBusDbContext.cs | Added Application entity as keyed entity |
+
+### Frontend: Application Registration UI
+
+| Component | Location | Description |
+|-----------|----------|-------------|
+| ApplicationService | features/settings/services/application.service.ts | Angular service for CRUD operations |
+| ApplicationRegistrationComponent | features/settings/components/application-registration/ | Main application list with table |
+| AddApplicationDialogComponent | features/settings/components/add-application-dialog/ | Dialog for registering new apps |
+| EditPermissionsDialogComponent | features/settings/components/edit-permissions-dialog/ | Dialog for editing permissions |
+
+Features:
+- Application list table with status badges
+- Add application with permissions selection
+- Edit application dialog
+- Delete with confirmation
+- Regenerate API key with confirmation
+- API key display (shown once, with copy button)
+- Masked API key in list view
+
+### .NET Client Library (MessageBus.Client)
+
+| File | Description |
+|------|-------------|
+| MessageBus.Client.csproj | .NET Standard 2.0 class library with SignalR client |
+| MessageBusClient.cs | Main client class with Configure, Publish, Subscribe, GetQueueStatus |
+| Models/QueueStatus.cs | Queue status and message models |
+| Models/MessageBusException.cs | Exception types (Auth, Authorization, NotFound) |
+| README.md | Usage documentation with examples |
+
+Client Methods:
+- Configure(apiUrl, apiKey) - Configure client
+- ConnectAsync() - Connect to SignalR hub
+- DisconnectAsync() - Disconnect from hub
+- PublishAsync<T>(queueName, message) - Send message
+- SubscribeAsync<T>(queueName, handler) - Real-time message subscription
+- GetQueueStatusAsync(queueName) - Get queue status
+- GetQueuesAsync() - List all queues
+
+### npm/TypeScript Client Library (messagebus-client)
+
+| File | Description |
+|------|-------------|
+| package.json | Package configuration with @microsoft/signalr dependency |
+| tsconfig.json | TypeScript configuration |
+| src/MessageBusClient.ts | Main client class |
+| src/models/QueueStatus.ts | TypeScript interfaces |
+| src/types.ts | Error types and configuration interfaces |
+| src/index.ts | Public exports |
+| README.md | Usage documentation with examples |
+
+Client Methods:
+- configure(apiUrl, apiKey) - Configure client
+- connect() - Connect to SignalR hub
+- disconnect() - Disconnect from hub
+- publish<T>(queueName, message) - Send message
+- subscribe<T>(queueName, handler) - Real-time subscription
+- getQueueStatus(queueName) - Get queue status
+- getQueues() - List all queues
+
+### API Documentation
+
+| File | Description |
+|------|-------------|
+| API-DOCUMENTATION.md | Comprehensive REST API documentation with all endpoints, request/response examples, authentication details |
+
+Documentation Sections:
+- Authentication (API key header, permissions)
+- Applications (CRUD endpoints)
+- Queues (list, details, actions)
+- Messages (send, bulk send, validation)
+- Poison Messages (retry, purge, dead-letter)
+- Conversations (list, trace, export)
+- Services (metadata)
+- Diagnostics (health, metrics, errors)
+- Health (ping, full check)
+- SignalR Hub (methods, events)
+- Client Libraries (usage examples)
+
+---
+
 ## Upcoming Phases
 
 ### Phase 7: Message Inspector & Sender
 - View message details
 - Send test messages
-
-### Phase 11: Settings & User Roles
-- User management
-- Role-based access control

@@ -1,0 +1,64 @@
+<aside class="sidebar" [class.sidebar--collapsed]="isSidebarCollapsed">
+  <!-- Logo & Brand -->
+  <div class="sidebar__header">
+    <div class="sidebar__brand">
+      <svg class="sidebar__logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+      </svg>
+      @if (!isSidebarCollapsed) {
+        <span class="sidebar__title">Message Bus</span>
+      }
+    </div>
+    <button class="sidebar__toggle" (click)="toggleSidebar()" [attr.aria-label]="isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        @if (isSidebarCollapsed) {
+          <path d="M9 5l7 7-7 7"/>
+        } @else {
+          <path d="M15 19l-7-7 7-7"/>
+        }
+      </svg>
+    </button>
+  </div>
+
+  <!-- Mode Indicator -->
+  <div class="sidebar__mode" [class.sidebar__mode--simple]="currentMode === 'simple'" [class.sidebar__mode--advanced]="currentMode === 'advanced'">
+    <svg class="sidebar__mode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path [attr.d]="getModeIcon()"/>
+    </svg>
+    @if (!isSidebarCollapsed) {
+      <span class="sidebar__mode-label">{{ getModeLabel() }}</span>
+    }
+  </div>
+
+  <!-- Navigation Items -->
+  <nav class="sidebar__nav">
+    @for (item of visibleNavItems; track item.path) {
+      <a
+        class="nav-item"
+        [routerLink]="item.path"
+        [class.nav-item--active]="isActive(item.path)"
+        [attr.title]="isSidebarCollapsed ? item.label : null"
+      >
+        <svg class="nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path [attr.d]="item.icon"/>
+        </svg>
+        @if (!isSidebarCollapsed) {
+          <span class="nav-item__label">{{ item.label }}</span>
+          @if (item.readOnly && currentMode === 'simple') {
+            <span class="nav-item__badge nav-item__badge--readonly">Read-only</span>
+          }
+          @if (item.badge) {
+            <span class="nav-item__badge">{{ item.badge }}</span>
+          }
+        }
+      </a>
+    }
+  </nav>
+
+  <!-- Footer -->
+  <div class="sidebar__footer">
+    @if (!isSidebarCollapsed) {
+      <div class="sidebar__version">v1.0.0</div>
+    }
+  </div>
+</aside>

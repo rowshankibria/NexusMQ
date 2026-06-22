@@ -3,3 +3,21 @@
   display: block;
   min-height: 100vh;
 }
+
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg-app, #f3f4f6);
+}
+
+.app-main {
+  flex: 1;
+  margin-left: 260px;
+  min-height: 100vh;
+  transition: margin-left 0.2s ease;
+  overflow-x: hidden;
+
+  &--collapsed {
+    margin-left: 64px;
+  }
+}

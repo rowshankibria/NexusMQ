@@ -1,0 +1,172 @@
+<div class="application-registration">
+  <div class="section-header">
+    <h3>Registered Applications</h3>
+    <button class="btn btn--primary" (click)="openAddDialog()">
+      <svg class="btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 5v14M5 12h14"/>
+      </svg>
+      Register Application
+    </button>
+  </div>
+
+  @if (message) {
+    <div class="message" [class.message--success]="messageType === 'success'" [class.message--error]="messageType === 'error'">
+      {{ message }}
+    </div>
+  }
+
+  @if (loading) {
+    <div class="loading">Loading applications...</div>
+  } @else if (applications.length === 0) {
+    <div class="empty-state">
+      <svg class="empty-state__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+      </svg>
+      <p>No applications registered yet</p>
+      <button class="btn btn--secondary" (click)="openAddDialog()">Register your first application</button>
+    </div>
+  } @else {
+    <div class="applications-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Application Name</th>
+            <th>API Key</th>
+            <th>Permissions</th>
+            <th>Status</th>
+            <th>Last Used</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (app of applications; track app.id) {
+            <tr>
+              <td>
+                <div class="app-name">
+                  <strong>{{ app.name }}</strong>
+                  @if (app.description) {
+                    <small>{{ app.description }}</small>
+                  }
+                </div>
+              </td>
+              <td>
+                <code class="api-key">{{ app.apiKeyMasked }}</code>
+              </td>
+              <td>
+                <span class="permissions-badge">{{ formatPermissions(app.permissions) }}</span>
+              </td>
+              <td>
+                <span class="status-badge" [class.status-badge--active]="app.isActive" [class.status-badge--inactive]="!app.isActive">
+                  {{ app.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td>{{ formatDate(app.lastUsedAt) }}</td>
+              <td>
+                <div class="actions">
+                  <button class="btn btn--icon" title="Edit Permissions" (click)="openEditDialog(app)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                  </button>
+                  <button class="btn btn--icon" title="Regenerate Key" (click)="openRegenerateDialog(app)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                  </button>
+                  <button class="btn btn--icon" [title]="app.isActive ? 'Deactivate' : 'Activate'" (click)="toggleActive(app)">
+                    @if (app.isActive) {
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                      </svg>
+                    } @else {
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                      </svg>
+                    }
+                  </button>
+                  <button class="btn btn--icon btn--danger" title="Delete" (click)="openDeleteDialog(app)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<!-- Add Application Dialog -->
+@if (showAddDialog) {
+  <app-add-application-dialog
+    (close)="closeAddDialog()"
+    (created)="onApplicationCreated($event)">
+  </app-add-application-dialog>
+}
+
+<!-- Edit Permissions Dialog -->
+@if (showEditDialog && selectedApplication) {
+  <app-edit-permissions-dialog
+    [application]="selectedApplication"
+    (close)="closeEditDialog()"
+    (updated)="onApplicationUpdated()">
+  </app-edit-permissions-dialog>
+}
+
+<!-- Delete Confirmation Dialog -->
+@if (showDeleteDialog && selectedApplication) {
+  <app-confirm-dialog
+    title="Delete Application"
+    [message]="'Are you sure you want to delete the application \'' + selectedApplication.name + '\'? This action cannot be undone.'"
+    type="danger"
+    confirmText="Delete"
+    (confirm)="confirmDelete()"
+    (cancel)="closeDeleteDialog()">
+  </app-confirm-dialog>
+}
+
+<!-- Regenerate Key Confirmation Dialog -->
+@if (showRegenerateDialog && selectedApplication) {
+  <app-confirm-dialog
+    title="Regenerate API Key"
+    [message]="'Are you sure you want to regenerate the API key for \'' + selectedApplication.name + '\'? The old key will immediately stop working.'"
+    type="warning"
+    confirmText="Regenerate"
+    (confirm)="confirmRegenerate()"
+    (cancel)="closeRegenerateDialog()">
+  </app-confirm-dialog>
+}
+
+<!-- New API Key Display Dialog -->
+@if (showApiKeyDialog) {
+  <div class="dialog-overlay" (click)="closeApiKeyDialog()">
+    <div class="dialog api-key-dialog" (click)="$event.stopPropagation()">
+      <div class="dialog__header">
+        <h3>Your New API Key</h3>
+      </div>
+      <div class="dialog__body">
+        <div class="api-key-warning">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+          <span>This key will only be shown once. Make sure to copy it now!</span>
+        </div>
+        <div class="api-key-display">
+          <code>{{ newApiKey }}</code>
+          <button class="btn btn--secondary" (click)="copyApiKey()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+            </svg>
+            Copy
+          </button>
+        </div>
+      </div>
+      <div class="dialog__footer">
+        <button class="btn btn--primary" (click)="closeApiKeyDialog()">Done</button>
+      </div>
+    </div>
+  </div>
+}

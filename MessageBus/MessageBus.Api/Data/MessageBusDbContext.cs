@@ -44,6 +44,9 @@ public class MessageBusDbContext : DbContext
     public DbSet<ContractInfo> ContractInfos { get; set; } = null!;
     public DbSet<MessageTypeInfo> MessageTypeInfos { get; set; } = null!;
 
+    // Application registration entities
+    public DbSet<Application> Applications { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -84,5 +87,20 @@ public class MessageBusDbContext : DbContext
         modelBuilder.Entity<ServiceInfo>().HasNoKey().ToView(null);
         modelBuilder.Entity<ContractInfo>().HasNoKey().ToView(null);
         modelBuilder.Entity<MessageTypeInfo>().HasNoKey().ToView(null);
+
+        // Application registration entity (keyed - maps to actual table)
+        modelBuilder.Entity<Application>()
+            .HasKey(a => a.Id);
+        modelBuilder.Entity<Application>()
+            .ToTable("Applications", "dbo");
+        modelBuilder.Entity<Application>()
+            .HasIndex(a => a.ApiKey)
+            .IsUnique();
+        modelBuilder.Entity<Application>()
+            .Property(a => a.ApiKey)
+            .HasMaxLength(64);
+        modelBuilder.Entity<Application>()
+            .Property(a => a.Name)
+            .HasMaxLength(100);
     }
 }
