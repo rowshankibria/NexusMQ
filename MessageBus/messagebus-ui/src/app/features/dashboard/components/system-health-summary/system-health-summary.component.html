@@ -1,0 +1,57 @@
+<div class="system-health-summary">
+  <div class="system-health-summary__header">
+    <h2 class="system-health-summary__title">System Health</h2>
+    <app-status-badge
+      *ngIf="systemHealth"
+      [status]="statusType"
+      size="large"
+    ></app-status-badge>
+  </div>
+
+  <div class="system-health-summary__metrics">
+    <app-metric-card
+      label="Total Services"
+      [value]="systemHealth?.totalServices ?? '-'"
+      icon="⚙"
+      variant="info"
+      [loading]="loading"
+    ></app-metric-card>
+
+    <app-metric-card
+      label="Active Conversations"
+      [value]="systemHealth?.activeConversations ?? '-'"
+      icon="💬"
+      variant="default"
+      [loading]="loading"
+    ></app-metric-card>
+
+    <app-metric-card
+      label="Queue Depth"
+      [value]="systemHealth?.totalQueueDepth ?? '-'"
+      icon="📥"
+      [variant]="statusVariant"
+      [loading]="loading"
+    ></app-metric-card>
+
+    <app-metric-card
+      label="Critical Issues"
+      [value]="systemHealth?.criticalIssues ?? '-'"
+      icon="🔴"
+      [variant]="systemHealth?.criticalIssues ? 'danger' : 'success'"
+      [loading]="loading"
+    ></app-metric-card>
+
+    <app-metric-card
+      label="Warnings"
+      [value]="systemHealth?.warnings ?? '-'"
+      icon="⚠"
+      [variant]="systemHealth?.warnings ? 'warning' : 'success'"
+      [loading]="loading"
+    ></app-metric-card>
+  </div>
+
+  <div class="system-health-summary__recommendation" *ngIf="systemHealth?.recommendation">
+    <span class="system-health-summary__recommendation-label">Recommendation:</span>
+    <span class="system-health-summary__recommendation-text">{{ systemHealth.recommendation }}</span>
+  </div>
+</div>

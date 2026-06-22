@@ -1,0 +1,81 @@
+<div class="queue-actions" *ngIf="queue">
+  <div class="queue-actions__primary">
+    <a
+      class="action-btn action-btn--primary"
+      [routerLink]="['/message-sender']"
+      [queryParams]="{ queue: queue.queueName }"
+      title="Send a new message to this queue"
+    >
+      <span class="action-icon">✉️</span>
+      <span class="action-label">Send Message</span>
+    </a>
+
+    <button
+      class="action-btn action-btn--secondary"
+      (click)="onReceiveMessage()"
+      [disabled]="loading || !hasMessages"
+      title="Receive next message from queue"
+    >
+      <span class="action-icon">📥</span>
+      <span class="action-label">Receive Message</span>
+    </button>
+
+    <button
+      class="action-btn"
+      [class.action-btn--warning]="!isPaused"
+      [class.action-btn--success]="isPaused"
+      (click)="onTogglePause()"
+      [disabled]="loading"
+      [title]="isPaused ? 'Resume receiving messages' : 'Pause receiving messages'"
+    >
+      <span class="action-icon">{{ getPauseButtonIcon() }}</span>
+      <span class="action-label">{{ getPauseButtonLabel() }}</span>
+    </button>
+  </div>
+
+  <div class="queue-actions__secondary">
+    <button
+      class="action-btn action-btn--danger"
+      (click)="onPurgeClick()"
+      [disabled]="loading || !hasMessages"
+      title="Delete all messages from queue"
+    >
+      <span class="action-icon">🗑️</span>
+      <span class="action-label">Purge Queue</span>
+    </button>
+
+    <a
+      class="action-btn action-btn--warning"
+      [class.action-btn--highlight]="hasPoisonMessages"
+      [routerLink]="['/poison-messages']"
+      [queryParams]="{ queue: queue.queueName }"
+      title="View poison messages"
+    >
+      <span class="action-icon">☠️</span>
+      <span class="action-label">
+        Poison Messages
+        <span class="badge" *ngIf="hasPoisonMessages">{{ queue.poisonMessageCount }}</span>
+      </span>
+    </a>
+
+    <button
+      class="action-btn action-btn--icon"
+      (click)="onRefresh()"
+      [disabled]="loading"
+      title="Refresh queue data"
+    >
+      <span class="action-icon" [class.spinning]="loading">↻</span>
+    </button>
+  </div>
+</div>
+
+<app-confirm-dialog
+  *ngIf="showPurgeConfirm"
+  title="Purge Queue"
+  [message]="'Are you sure you want to delete all ' + queue?.messageCount + ' messages from ' + queue?.displayName + '? This action cannot be undone.'"
+  confirmText="Purge All Messages"
+  cancelText="Cancel"
+  type="danger"
+  (confirmed)="onConfirmPurge()"
+  (cancelled)="onCancelPurge()"
+></app-confirm-dialog>

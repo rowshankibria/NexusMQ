@@ -1,0 +1,36 @@
+<div class="queue-card" [ngClass]="cardClass">
+  <div class="queue-card__header">
+    <h4 class="queue-card__name" [title]="queue.queueName">{{ queue.displayName }}</h4>
+    <app-status-badge [status]="statusType" size="small"></app-status-badge>
+  </div>
+
+  <div class="queue-card__stats">
+    <div class="queue-card__stat">
+      <span class="queue-card__stat-label">Messages</span>
+      <span class="queue-card__stat-value">{{ queue.messageCount }}</span>
+    </div>
+
+    <div class="queue-card__stat">
+      <span class="queue-card__stat-label">Oldest</span>
+      <span class="queue-card__stat-value">{{ formattedAge }}</span>
+    </div>
+
+    <div class="queue-card__stat">
+      <span class="queue-card__stat-label">Throughput</span>
+      <span class="queue-card__stat-value">{{ throughputDisplay }}</span>
+    </div>
+  </div>
+
+  <div class="queue-card__footer">
+    <span class="queue-card__indicator" [class.queue-card__indicator--active]="queue.isReceiveEnabled">
+      Receive: {{ queue.isReceiveEnabled ? 'On' : 'Off' }}
+    </span>
+    <span class="queue-card__indicator" [class.queue-card__indicator--active]="queue.isActivationEnabled">
+      Activation: {{ queue.isActivationEnabled ? 'On' : 'Off' }}
+    </span>
+  </div>
+
+  <div class="queue-card__errors" *ngIf="queue.errors > 0">
+    <span class="queue-card__error-badge">{{ queue.errors }} error(s)</span>
+  </div>
+</div>

@@ -1,0 +1,39 @@
+<div
+  class="confirm-dialog__backdrop"
+  *ngIf="isOpen"
+  (click)="onBackdropClick($event)"
+  [class.confirm-dialog__backdrop--visible]="isOpen"
+>
+  <div class="confirm-dialog" [ngClass]="typeClass" role="dialog" aria-modal="true">
+    <div class="confirm-dialog__header">
+      <span class="confirm-dialog__icon">{{ typeIcon }}</span>
+      <h3 class="confirm-dialog__title">{{ title }}</h3>
+    </div>
+
+    <div class="confirm-dialog__body">
+      <p class="confirm-dialog__message">{{ message }}</p>
+      <ng-content></ng-content>
+    </div>
+
+    <div class="confirm-dialog__footer">
+      <button
+        type="button"
+        class="confirm-dialog__button confirm-dialog__button--cancel"
+        [disabled]="loading"
+        (click)="onCancel()"
+      >
+        {{ cancelText }}
+      </button>
+      <button
+        type="button"
+        class="confirm-dialog__button confirm-dialog__button--confirm"
+        [ngClass]="'confirm-dialog__button--' + type"
+        [disabled]="loading"
+        (click)="onConfirm()"
+      >
+        <span class="confirm-dialog__button-spinner" *ngIf="loading"></span>
+        {{ confirmText }}
+      </button>
+    </div>
+  </div>
+</div>

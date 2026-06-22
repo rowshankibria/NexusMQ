@@ -1,0 +1,209 @@
+.state-transition-diagram {
+  background: white;
+  border: 1px solid var(--border-color, #dee2e6);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.diagram-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: var(--surface-color, #f8f9fa);
+  border-bottom: 1px solid var(--border-color, #dee2e6);
+
+  h4 {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary, #212529);
+  }
+
+  .legend {
+    display: flex;
+    gap: 1rem;
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.7rem;
+      color: var(--text-secondary, #6c757d);
+
+      .legend-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+
+        &.current {
+          background: var(--primary-color, #0d6efd);
+        }
+
+        &.potential {
+          background: var(--warning-color, #ffc107);
+        }
+
+        &.inactive {
+          background: var(--border-color, #dee2e6);
+        }
+      }
+    }
+  }
+}
+
+.diagram-container {
+  padding: 1rem;
+  overflow-x: auto;
+
+  svg {
+    width: 100%;
+    max-width: 580px;
+    height: auto;
+    min-height: 200px;
+    display: block;
+    margin: 0 auto;
+  }
+}
+
+.edges {
+  .diagram-edge {
+    stroke: var(--border-color, #adb5bd);
+    stroke-width: 1.5;
+    color: var(--border-color, #adb5bd);
+
+    &.active-edge {
+      stroke: var(--primary-color, #0d6efd);
+      stroke-width: 2;
+      color: var(--primary-color, #0d6efd);
+    }
+
+    &.potential-edge {
+      stroke: var(--warning-color, #ffc107);
+      stroke-width: 1.5;
+      color: var(--warning-color, #ffc107);
+      opacity: 0.7;
+    }
+  }
+
+  .edge-label {
+    font-size: 8px;
+    fill: var(--text-secondary, #6c757d);
+  }
+}
+
+.nodes {
+  .diagram-node {
+    .node-shape {
+      fill: white;
+      stroke: var(--border-color, #dee2e6);
+      stroke-width: 1.5;
+      transition: all 0.2s;
+    }
+
+    .node-label {
+      font-size: 10px;
+      font-weight: 500;
+      fill: var(--text-secondary, #6c757d);
+    }
+
+    &.start-node {
+      .node-shape {
+        fill: var(--text-secondary, #6c757d);
+        stroke: var(--text-secondary, #6c757d);
+      }
+
+      .node-label {
+        fill: white;
+        font-size: 14px;
+      }
+    }
+
+    &.current-node {
+      .node-shape {
+        fill: var(--primary-color, #0d6efd);
+        stroke: var(--primary-color, #0d6efd);
+      }
+
+      .node-label {
+        fill: white;
+        font-weight: 600;
+      }
+    }
+
+    &.potential-node {
+      .node-shape {
+        fill: rgba(255, 193, 7, 0.1);
+        stroke: var(--warning-color, #ffc107);
+        stroke-dasharray: 4, 2;
+      }
+
+      .node-label {
+        fill: #997404;
+      }
+    }
+
+    &.error-node {
+      &.current-node {
+        .node-shape {
+          fill: var(--danger-color, #dc3545);
+          stroke: var(--danger-color, #dc3545);
+        }
+      }
+
+      &:not(.current-node) {
+        .node-shape {
+          stroke: var(--danger-color, #dc3545);
+          stroke-dasharray: 4, 2;
+        }
+
+        .node-label {
+          fill: var(--danger-color, #dc3545);
+        }
+      }
+    }
+
+    &.end-node:not(.error-node) {
+      &.current-node {
+        .node-shape {
+          fill: var(--success-color, #198754);
+          stroke: var(--success-color, #198754);
+        }
+      }
+    }
+  }
+}
+
+.state-description {
+  padding: 0.75rem 1rem;
+  background: var(--surface-color, #f8f9fa);
+  border-top: 1px solid var(--border-color, #dee2e6);
+
+  .description-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    .state-name {
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: var(--text-primary, #212529);
+    }
+
+    .state-detail {
+      font-size: 0.8rem;
+      color: var(--text-secondary, #6c757d);
+    }
+  }
+}
+
+.empty-state {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-secondary, #6c757d);
+
+  p {
+    margin: 0;
+    font-size: 0.875rem;
+  }
+}

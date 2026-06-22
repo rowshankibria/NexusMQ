@@ -1,0 +1,134 @@
+<div class="conversation-timeline">
+  <!-- Header -->
+  <div class="timeline-header" *ngIf="timeline">
+    <h3>Conversation Timeline</h3>
+    <div class="conversation-info">
+      <span class="info-item">
+        <span class="label">Contract:</span>
+        <span class="value">{{ timeline.conversation.contractName }}</span>
+      </span>
+      <span class="info-item">
+        <span class="label">Messages:</span>
+        <span class="value">{{ timeline.messages.length }}</span>
+      </span>
+      <span class="info-item">
+        <span class="label">Started:</span>
+        <span class="value">{{ formatDateTime(timeline.conversation.createdAt) }}</span>
+      </span>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <span>Loading timeline...</span>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && !timeline" class="empty-state">
+    <div class="empty-icon">📋</div>
+    <p>Select a conversation to view its timeline</p>
+  </div>
+
+  <!-- Timeline -->
+  <div *ngIf="!loading && timeline" class="timeline-container">
+    <div class="timeline">
+      <div
+        *ngFor="let item of timelineItems; trackBy: trackByTimestamp"
+        class="timeline-item"
+        [ngClass]="{
+          'message-item': isMessage(item),
+          'transition-item': isTransition(item),
+          'sent': isMessage(item) && asMessage(item.data).direction === 'sent',
+          'received': isMessage(item) && asMessage(item.data).direction === 'received'
+        }"
+      >
+        <!-- Timeline dot and line -->
+        <div class="timeline-marker">
+          <div
+            class="timeline-dot"
+            [ngClass]="{
+              'sent': isMessage(item) && asMessage(item.data).direction === 'sent',
+              'received': isMessage(item) && asMessage(item.data).direction === 'received',
+              'transition': isTransition(item),
+              'error': isTransition(item) && asTransition(item.data).toState === 'ER'
+            }"
+          ></div>
+          <div class="timeline-line"></div>
+        </div>
+
+        <!-- Content -->
+        <div class="timeline-content">
+          <!-- State Transition -->
+          <ng-container *ngIf="isTransition(item)">
+            <div class="transition-card" [ngClass]="getTransitionStateColor(asTransition(item.data).toState)">
+              <div class="transition-label">{{ getTransitionLabel(asTransition(item.data)) }}</div>
+              <div class="transition-time">{{ formatDateTime(asTransition(item.data).transitionTime) }}</div>
+              <div *ngIf="asTransition(item.data).triggeredBy" class="transition-trigger">
+                Triggered by: {{ asTransition(item.data).triggeredBy }}
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- Message -->
+          <ng-container *ngIf="isMessage(item)">
+            <app-timeline-message
+              [message]="asMessage(item.data)"
+              [selected]="isMessageSelected(asMessage(item.data))"
+              (click)="onMessageClick(asMessage(item.data))"
+              (inspect)="onMessageInspect(asMessage(item.data))"
+              (mouseenter)="onMessageHover($event, asMessage(item.data))"
+              (mouseleave)="onMessageHover($event, null)"
+            ></app-timeline-message>
+          </ng-container>
+        </div>
+
+        <!-- Timestamp -->
+        <div class="timeline-timestamp">
+          {{ formatTime(item.timestamp) }}
+        </div>
+      </div>
+
+      <!-- End marker -->
+      <div class="timeline-item timeline-end">
+        <div class="timeline-marker">
+          <div class="timeline-dot end-dot"></div>
+        </div>
+        <div class="timeline-content">
+          <span class="end-label" *ngIf="timeline.conversation.state === 'CD'">Conversation Closed</span>
+          <span class="end-label" *ngIf="timeline.conversation.state === 'ER'">Conversation Error</span>
+          <span class="end-label" *ngIf="timeline.conversation.state !== 'CD' && timeline.conversation.state !== 'ER'">Current State: {{ stateLabels[timeline.conversation.state] }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hover Preview -->
+  <div
+    *ngIf="hoveredMessage"
+    class="message-preview"
+    [style.top.px]="hoverPosition.y + 10"
+    [style.left.px]="hoverPosition.x + 10"
+  >
+    <div class="preview-header">{{ hoveredMessage.messageType }}</div>
+    <div class="preview-row">
+      <span class="preview-label">Sent:</span>
+      <span class="preview-value">{{ formatDateTime(hoveredMessage.sentTimestamp) }}</span>
+    </div>
+    <div class="preview-row" *ngIf="hoveredMessage.receivedTimestamp">
+      <span class="preview-label">Received:</span>
+      <span class="preview-value">{{ formatDateTime(hoveredMessage.receivedTimestamp) }}</span>
+    </div>
+    <div class="preview-row">
+      <span class="preview-label">Size:</span>
+      <span class="preview-value">{{ formatSize(hoveredMessage.messageSize) }}</span>
+    </div>
+    <div class="preview-row">
+      <span class="preview-label">Priority:</span>
+      <span class="preview-value">{{ hoveredMessage.priority }}</span>
+    </div>
+    <div class="preview-body" *ngIf="hoveredMessage.messageBodyPreview">
+      {{ hoveredMessage.messageBodyPreview }}
+    </div>
+  </div>
+</div>

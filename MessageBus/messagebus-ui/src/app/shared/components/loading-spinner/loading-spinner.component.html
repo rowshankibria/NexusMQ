@@ -1,0 +1,7 @@
+<div
+  class="loading-spinner"
+  [ngClass]="[sizeClass, overlay ? 'loading-spinner--overlay' : '']"
+>
+  <div class="loading-spinner__circle" [style.border-top-color]="color"></div>
+  <span class="loading-spinner__message" *ngIf="message">{{ message }}</span>
+</div>

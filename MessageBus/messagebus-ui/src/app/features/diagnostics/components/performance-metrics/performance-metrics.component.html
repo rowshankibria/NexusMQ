@@ -1,0 +1,135 @@
+<div class="performance-metrics">
+  <div class="panel-header">
+    <h2>Performance Metrics</h2>
+    <div class="time-range-selector">
+      <button
+        *ngFor="let option of timeRangeOptions"
+        class="time-btn"
+        [class.active]="timeRange === option.value"
+        (click)="onTimeRangeChange(option.value)">
+        {{ option.label }}
+      </button>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="!metrics && !loading">
+    <span class="empty-icon">📊</span>
+    <p>No performance data available</p>
+  </div>
+
+  <ng-container *ngIf="metrics">
+    <!-- Summary Cards -->
+    <div class="metrics-summary">
+      <div class="metric-card">
+        <span class="metric-label">Current Rate</span>
+        <span class="metric-value">{{ metrics.messageRate.currentRate | number:'1.1-1' }}</span>
+        <span class="metric-unit">msg/sec</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">Average Rate</span>
+        <span class="metric-value">{{ metrics.messageRate.averageRate | number:'1.1-1' }}</span>
+        <span class="metric-unit">msg/sec</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">Peak Rate</span>
+        <span class="metric-value">{{ metrics.messageRate.peakRate | number:'1.1-1' }}</span>
+        <span class="metric-unit">msg/sec</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">Queue Depth</span>
+        <span class="metric-value">{{ metrics.queueDepthTrend.currentDepth | number }}</span>
+        <span class="metric-trend" [ngClass]="getTrendClass(metrics.queueDepthTrend.trend)">
+          {{ getTrendIcon(metrics.queueDepthTrend.trend) }} {{ metrics.queueDepthTrend.trend }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="charts-row">
+      <div class="chart-container">
+        <h3>Message Rate ({{ timeRange }})</h3>
+        <div class="chart-wrapper">
+          <canvas #messageRateCanvas></canvas>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <h3>Queue Depth Trend ({{ timeRange }})</h3>
+        <div class="chart-wrapper">
+          <canvas #queueDepthCanvas></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tables Row -->
+    <div class="tables-row">
+      <!-- Slowest Queues -->
+      <div class="table-container">
+        <h3>Slowest Queues</h3>
+        <div class="table-wrapper" *ngIf="metrics.slowestQueues.length > 0; else noSlowQueues">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Queue Name</th>
+                <th>Avg Processing</th>
+                <th>Max Processing</th>
+                <th>Messages</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let queue of metrics.slowestQueues; trackBy: trackByQueue">
+                <td class="queue-name">{{ queue.queueName }}</td>
+                <td class="processing-time" [class.slow]="queue.averageProcessingMs > 1000">
+                  {{ formatProcessingTime(queue.averageProcessingMs) }}
+                </td>
+                <td class="processing-time" [class.slow]="queue.maxProcessingMs > 5000">
+                  {{ formatProcessingTime(queue.maxProcessingMs) }}
+                </td>
+                <td>{{ queue.messageCount | number }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <ng-template #noSlowQueues>
+          <div class="empty-table">No slow queues detected</div>
+        </ng-template>
+      </div>
+
+      <!-- Most Active Services -->
+      <div class="table-container">
+        <h3>Most Active Services</h3>
+        <div class="table-wrapper" *ngIf="metrics.mostActiveServices.length > 0; else noActiveServices">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Service Name</th>
+                <th>Received</th>
+                <th>Sent</th>
+                <th>Active</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let service of metrics.mostActiveServices; trackBy: trackByService">
+                <td class="service-name">{{ service.serviceName }}</td>
+                <td>{{ service.messagesReceived | number }}</td>
+                <td>{{ service.messagesSent | number }}</td>
+                <td>{{ service.activeConversations | number }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <ng-template #noActiveServices>
+          <div class="empty-table">No active services</div>
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- Age Distribution Chart -->
+    <div class="chart-container full-width">
+      <h3>Conversation Age Distribution</h3>
+      <div class="chart-wrapper bar-chart">
+        <canvas #ageDistributionCanvas></canvas>
+      </div>
+    </div>
+  </ng-container>
+</div>

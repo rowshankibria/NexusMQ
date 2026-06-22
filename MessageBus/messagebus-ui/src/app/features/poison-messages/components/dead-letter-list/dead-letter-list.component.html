@@ -1,0 +1,211 @@
+<div class="dead-letter-list">
+  <!-- Filters -->
+  <div class="filters">
+    <div class="filter-row">
+      <div class="search-input">
+        <input
+          type="text"
+          placeholder="Search messages..."
+          [ngModel]="filter?.searchTerm || ''"
+          (ngModelChange)="onSearchChange($event)"
+        />
+      </div>
+
+      <div class="filter-select">
+        <select
+          [ngModel]="filter?.queueName || ''"
+          (ngModelChange)="onQueueFilterChange($event)"
+        >
+          <option value="">All Queues</option>
+          <option *ngFor="let queue of queueNames" [value]="queue">{{ queue }}</option>
+        </select>
+      </div>
+
+      <div class="filter-select">
+        <select
+          [ngModel]="filter?.messageType || ''"
+          (ngModelChange)="onMessageTypeFilterChange($event)"
+        >
+          <option value="">All Message Types</option>
+          <option *ngFor="let type of messageTypes" [value]="type">{{ type }}</option>
+        </select>
+      </div>
+
+      <div class="filter-select">
+        <select
+          [ngModel]="filter?.reason || 'all'"
+          (ngModelChange)="onReasonFilterChange($event)"
+        >
+          <option value="all">All Reasons</option>
+          <option *ngFor="let reason of reasonOptions" [value]="reason">
+            {{ getReasonLabel(reason) }}
+          </option>
+        </select>
+      </div>
+
+      <button class="btn btn-secondary" (click)="onResetFilter()">
+        Reset Filters
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-overlay" *ngIf="loading">
+    <div class="spinner"></div>
+    <span>Loading dead-letter messages...</span>
+  </div>
+
+  <!-- Table -->
+  <div class="table-container" [class.loading]="loading">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th class="checkbox-column">
+            <input
+              type="checkbox"
+              [checked]="allSelected"
+              [indeterminate]="someSelected"
+              (change)="onSelectAllChange()"
+            />
+          </th>
+          <th class="sortable" (click)="onSortChange('queueName')">
+            Queue Name {{ getSortIcon('queueName') }}
+          </th>
+          <th class="sortable" (click)="onSortChange('messageType')">
+            Message Type {{ getSortIcon('messageType') }}
+          </th>
+          <th class="sortable" (click)="onSortChange('reason')">
+            Reason {{ getSortIcon('reason') }}
+          </th>
+          <th>Resolution Notes</th>
+          <th class="sortable" (click)="onSortChange('createdAt')">
+            Dead-Lettered {{ getSortIcon('createdAt') }}
+          </th>
+          <th class="actions-column">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          *ngFor="let message of messages; trackBy: trackById"
+          [class.selected]="isSelected(message)"
+          (click)="onRowClick(message)"
+        >
+          <td class="checkbox-column" (click)="$event.stopPropagation()">
+            <input
+              type="checkbox"
+              [checked]="isSelected(message)"
+              (change)="onCheckboxChange($event, message)"
+            />
+          </td>
+          <td class="queue-name">
+            <span class="queue-badge">{{ message.queueName }}</span>
+          </td>
+          <td class="message-type">
+            <span class="type-badge">{{ message.messageTypeName }}</span>
+          </td>
+          <td class="reason">
+            <span class="reason-badge" [ngClass]="getReasonClass(message.reason)">
+              {{ getReasonLabel(message.reason) }}
+            </span>
+          </td>
+          <td class="resolution-notes" (click)="$event.stopPropagation()">
+            <div *ngIf="!isEditing(message)" class="notes-display">
+              <span *ngIf="message.resolutionNotes" class="notes-text">
+                {{ message.resolutionNotes | slice:0:50 }}{{ message.resolutionNotes.length > 50 ? '...' : '' }}
+              </span>
+              <span *ngIf="!message.resolutionNotes" class="no-notes">No notes</span>
+              <button class="btn btn-sm btn-icon" (click)="startEditingNotes($event, message)" title="Edit notes">
+                ✎
+              </button>
+            </div>
+            <div *ngIf="isEditing(message)" class="notes-edit">
+              <input
+                type="text"
+                [(ngModel)]="editingNotes"
+                placeholder="Enter resolution notes..."
+                (keydown.enter)="saveNotes($event, message)"
+                (keydown.escape)="cancelEditing()"
+              />
+              <button class="btn btn-sm btn-primary" (click)="saveNotes($event, message)">✓</button>
+              <button class="btn btn-sm btn-secondary" (click)="cancelEditing()">✕</button>
+            </div>
+          </td>
+          <td class="timestamp">
+            <span [title]="formatDate(message.createdAt)">
+              {{ formatAge(message.createdAt) }}
+            </span>
+          </td>
+          <td class="actions-column">
+            <div class="action-buttons">
+              <button
+                class="btn btn-sm btn-primary"
+                title="View Details"
+                (click)="onRowClick(message)"
+              >
+                👁
+              </button>
+            </div>
+          </td>
+        </tr>
+        <tr *ngIf="messages.length === 0 && !loading">
+          <td colspan="7" class="empty-state">
+            <div class="empty-message">
+              <span class="empty-icon">📪</span>
+              <p>No dead-letter messages found</p>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination" *ngIf="totalItems > 0">
+    <div class="page-size">
+      <label>Rows per page:</label>
+      <select [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange()">
+        <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</option>
+      </select>
+    </div>
+
+    <div class="page-info">
+      {{ startItem }} - {{ endItem }} of {{ totalItems }}
+    </div>
+
+    <div class="page-controls">
+      <button
+        class="btn btn-sm"
+        [disabled]="currentPage === 0"
+        (click)="goToPage(0)"
+        title="First page"
+      >
+        ⟨⟨
+      </button>
+      <button
+        class="btn btn-sm"
+        [disabled]="currentPage === 0"
+        (click)="previousPage()"
+        title="Previous page"
+      >
+        ⟨
+      </button>
+      <span class="page-number">Page {{ currentPage + 1 }} of {{ totalPages }}</span>
+      <button
+        class="btn btn-sm"
+        [disabled]="currentPage >= totalPages - 1"
+        (click)="nextPage()"
+        title="Next page"
+      >
+        ⟩
+      </button>
+      <button
+        class="btn btn-sm"
+        [disabled]="currentPage >= totalPages - 1"
+        (click)="goToPage(totalPages - 1)"
+        title="Last page"
+      >
+        ⟩⟩
+      </button>
+    </div>
+  </div>
+</div>

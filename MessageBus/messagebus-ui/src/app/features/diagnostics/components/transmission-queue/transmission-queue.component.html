@@ -1,0 +1,170 @@
+<div class="transmission-queue">
+  <div class="panel-header">
+    <h2>Transmission Queue</h2>
+    <span class="entry-count">{{ entries.length }} entries</span>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <div class="filter-group">
+      <label class="checkbox-label">
+        <input
+          type="checkbox"
+          [checked]="filter?.stuckOnly"
+          (change)="onStuckOnlyChange($any($event.target).checked)">
+        <span>Stuck messages only</span>
+      </label>
+    </div>
+
+    <div class="filter-group">
+      <label>Target Service</label>
+      <input
+        type="text"
+        class="filter-input"
+        placeholder="Filter by service..."
+        [value]="filter?.targetService || ''"
+        (input)="onTargetServiceChange($any($event.target).value)">
+    </div>
+
+    <div class="filter-group">
+      <label>Status</label>
+      <select
+        class="filter-select"
+        [value]="filter?.status || 'All'"
+        (change)="onStatusChange($any($event.target).value)">
+        <option *ngFor="let opt of statusOptions" [value]="opt.value">{{ opt.label }}</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Min. Stuck Time (min)</label>
+      <input
+        type="number"
+        class="filter-input"
+        min="0"
+        [value]="filter?.minStuckMinutes || 0"
+        (input)="onMinStuckMinutesChange($any($event.target).valueAsNumber || 0)">
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="entries.length === 0 && !loading">
+    <span class="empty-icon">📤</span>
+    <p>No messages in transmission queue</p>
+    <span class="empty-hint">Messages waiting to be delivered will appear here</span>
+  </div>
+
+  <!-- Table -->
+  <div class="table-container" *ngIf="entries.length > 0">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Target Service</th>
+          <th>Status</th>
+          <th>Time Stuck</th>
+          <th>Error</th>
+          <th>Retries</th>
+          <th>Size</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let entry of entries; trackBy: trackByEntry">
+          <td class="service-cell">
+            <span class="service-name">{{ entry.targetServiceName }}</span>
+            <span class="conversation-handle">{{ entry.conversationHandle | slice:0:8 }}...</span>
+          </td>
+          <td>
+            <span class="status-badge" [ngClass]="getStatusClass(entry.transmissionStatus)">
+              {{ getStatusLabel(entry.transmissionStatus) }}
+            </span>
+          </td>
+          <td class="duration-cell" [class.stuck]="entry.timeStuckMinutes > 30">
+            {{ formatDuration(entry.timeStuckMinutes) }}
+          </td>
+          <td class="error-cell">
+            <span *ngIf="entry.errorDescription; else noError" class="error-text" [title]="entry.errorDescription">
+              {{ entry.errorDescription | slice:0:50 }}{{ entry.errorDescription.length > 50 ? '...' : '' }}
+            </span>
+            <ng-template #noError>
+              <span class="no-error">—</span>
+            </ng-template>
+          </td>
+          <td class="retry-cell">
+            <span class="retry-count" [class.high]="entry.retryCount > 5">{{ entry.retryCount }}</span>
+          </td>
+          <td>{{ formatSize(entry.messageSize) }}</td>
+          <td class="actions-cell">
+            <button class="btn-action btn-view" (click)="viewMessage(entry)" title="View Message">
+              👁
+            </button>
+            <button class="btn-action btn-force" (click)="forceDelivery(entry)" title="Force Delivery">
+              ⚡
+            </button>
+            <button class="btn-action btn-delete" (click)="deleteEntry(entry)" title="Delete">
+              🗑
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Message Modal -->
+  <div class="modal-overlay" *ngIf="showMessageModal" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Message Details</h3>
+        <button class="btn-close" (click)="closeModal()">×</button>
+      </div>
+      <div class="modal-body" *ngIf="selectedEntry">
+        <div class="detail-row">
+          <span class="detail-label">Conversation Handle</span>
+          <span class="detail-value monospace">{{ selectedEntry.conversationHandle }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Target Service</span>
+          <span class="detail-value">{{ selectedEntry.targetServiceName }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Status</span>
+          <span class="detail-value">
+            <span class="status-badge" [ngClass]="getStatusClass(selectedEntry.transmissionStatus)">
+              {{ getStatusLabel(selectedEntry.transmissionStatus) }}
+            </span>
+          </span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Time Stuck</span>
+          <span class="detail-value">{{ formatDuration(selectedEntry.timeStuckMinutes) }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Retry Count</span>
+          <span class="detail-value">{{ selectedEntry.retryCount }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Message Size</span>
+          <span class="detail-value">{{ formatSize(selectedEntry.messageSize) }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Enqueued Time</span>
+          <span class="detail-value">{{ selectedEntry.enqueuedTime | date:'medium' }}</span>
+        </div>
+        <div class="detail-row" *ngIf="selectedEntry.lastRetryTime">
+          <span class="detail-label">Last Retry</span>
+          <span class="detail-value">{{ selectedEntry.lastRetryTime | date:'medium' }}</span>
+        </div>
+        <div class="detail-row error-section" *ngIf="selectedEntry.errorDescription">
+          <span class="detail-label">Error Description</span>
+          <span class="detail-value error-text">{{ selectedEntry.errorDescription }}</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeModal()">Close</button>
+        <button class="btn btn-primary" (click)="forceDelivery(selectedEntry!); closeModal()">
+          Force Delivery
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

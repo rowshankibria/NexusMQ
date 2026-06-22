@@ -1,0 +1,109 @@
+<div class="state-transition-diagram">
+  <div class="diagram-header">
+    <h4>Conversation State Flow</h4>
+    <div class="legend">
+      <div class="legend-item">
+        <span class="legend-dot current"></span>
+        <span>Current</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot potential"></span>
+        <span>Possible Next</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot inactive"></span>
+        <span>Other States</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="diagram-container" *ngIf="conversation || currentState">
+    <svg
+      [attr.viewBox]="'0 0 ' + (diagramWidth + 80) + ' ' + (diagramHeight + 20)"
+      preserveAspectRatio="xMidYMid meet"
+    >
+      <!-- Edges -->
+      <g class="edges">
+        <g *ngFor="let edge of edges" [ngClass]="getEdgeClass(edge)">
+          <path
+            [attr.d]="getEdgePath(edge)"
+            fill="none"
+            [attr.stroke-dasharray]="edge.isPotential ? '5,5' : 'none'"
+            marker-end="url(#arrowhead)"
+          />
+          <text
+            *ngIf="edge.label"
+            [attr.x]="getEdgeLabelPosition(edge).x"
+            [attr.y]="getEdgeLabelPosition(edge).y"
+            class="edge-label"
+          >
+            {{ edge.label }}
+          </text>
+        </g>
+      </g>
+
+      <!-- Arrowhead marker -->
+      <defs>
+        <marker
+          id="arrowhead"
+          markerWidth="10"
+          markerHeight="7"
+          refX="9"
+          refY="3.5"
+          orient="auto"
+        >
+          <polygon points="0 0, 10 3.5, 0 7" fill="currentColor" />
+        </marker>
+      </defs>
+
+      <!-- Nodes -->
+      <g class="nodes">
+        <g
+          *ngFor="let node of nodes"
+          [ngClass]="getNodeClass(node)"
+          [attr.transform]="'translate(' + node.x + ',' + node.y + ')'"
+        >
+          <!-- Start node (circle) -->
+          <ng-container *ngIf="node.isStart">
+            <circle cx="10" cy="18" r="12" class="node-shape" />
+            <text x="10" y="22" text-anchor="middle" class="node-label">●</text>
+          </ng-container>
+
+          <!-- Regular nodes (rounded rectangle) -->
+          <ng-container *ngIf="!node.isStart">
+            <rect
+              x="0"
+              y="0"
+              [attr.width]="nodeWidth"
+              [attr.height]="nodeHeight"
+              rx="6"
+              ry="6"
+              class="node-shape"
+            />
+            <text
+              [attr.x]="nodeWidth / 2"
+              [attr.y]="nodeHeight / 2 + 4"
+              text-anchor="middle"
+              class="node-label"
+            >
+              {{ node.label }}
+            </text>
+          </ng-container>
+        </g>
+      </g>
+    </svg>
+  </div>
+
+  <!-- State Description -->
+  <div class="state-description" *ngIf="currentState || conversation?.state">
+    <div class="description-content">
+      <span class="state-name">{{ stateLabels[currentState || conversation?.state || 'CO'] }}</span>
+      <span class="state-detail">{{ getStateDescription(currentState || conversation?.state || 'CO') }}</span>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!conversation && !currentState">
+    <p>Select a conversation to view its state diagram</p>
+  </div>
+</div>

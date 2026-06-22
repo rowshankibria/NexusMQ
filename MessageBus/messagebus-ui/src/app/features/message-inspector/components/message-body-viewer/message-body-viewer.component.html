@@ -1,0 +1,93 @@
+<div class="message-body-viewer" *ngIf="message?.body">
+  <div class="message-body-viewer__header">
+    <div class="message-body-viewer__title-group">
+      <h3 class="message-body-viewer__title">Message Body</h3>
+      <span class="message-body-viewer__format-badge" [attr.data-format]="detectedFormat">
+        {{ getFormatIcon() }}
+      </span>
+    </div>
+
+    <div class="message-body-viewer__actions">
+      <div class="message-body-viewer__stats">
+        <span class="message-body-viewer__stat">{{ getCharacterCount() }} chars</span>
+        <span class="message-body-viewer__stat">{{ getLineCount() }} lines</span>
+        <span class="message-body-viewer__stat">{{ formatBytes(message.metadata.messageSize) }}</span>
+      </div>
+
+      <div class="message-body-viewer__buttons">
+        <button
+          class="message-body-viewer__btn"
+          [class.message-body-viewer__btn--active]="viewMode === 'formatted'"
+          (click)="toggleViewMode()"
+          title="Toggle formatted/raw view">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 7 4 4 20 4 20 7"></polyline>
+            <line x1="9" y1="20" x2="15" y2="20"></line>
+            <line x1="12" y1="4" x2="12" y2="20"></line>
+          </svg>
+          <span>{{ viewMode === 'formatted' ? 'Formatted' : 'Raw' }}</span>
+        </button>
+
+        <button
+          class="message-body-viewer__btn"
+          [class.message-body-viewer__btn--active]="showBinaryView"
+          (click)="toggleBinaryView()"
+          title="Toggle binary hex view">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="3" y1="9" x2="21" y2="9"></line>
+            <line x1="9" y1="21" x2="9" y2="9"></line>
+          </svg>
+          <span>Hex</span>
+        </button>
+
+        <button
+          class="message-body-viewer__btn"
+          [class.message-body-viewer__btn--success]="copySuccess"
+          (click)="copyToClipboard()"
+          title="Copy to clipboard">
+          <svg *ngIf="!copySuccess" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          <svg *ngIf="copySuccess" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span>{{ copySuccess ? 'Copied!' : 'Copy' }}</span>
+        </button>
+
+        <button
+          class="message-body-viewer__btn"
+          (click)="exportToFile()"
+          title="Export to file">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>Export</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="message-body-viewer__content">
+    <div class="message-body-viewer__code-wrapper" *ngIf="!showBinaryView">
+      <pre class="message-body-viewer__pre"><code #codeBlock [ngClass]="getPrismLanguage()">{{ formattedContent }}</code></pre>
+    </div>
+
+    <div class="message-body-viewer__hex-wrapper" *ngIf="showBinaryView">
+      <pre class="message-body-viewer__hex">{{ getBinaryHexView() }}</pre>
+    </div>
+  </div>
+</div>
+
+<div class="message-body-viewer message-body-viewer--empty" *ngIf="!message?.body?.content">
+  <div class="message-body-viewer__empty-state">
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+      <polyline points="14 2 14 8 20 8"></polyline>
+    </svg>
+    <p>No message body available</p>
+  </div>
+</div>

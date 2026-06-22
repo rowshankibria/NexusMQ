@@ -1,0 +1,111 @@
+<div class="queue-list">
+  <div class="queue-list__header">
+    <div class="queue-list__title">
+      <h3>Queues</h3>
+      <span class="queue-list__count">{{ queues.length }}</span>
+    </div>
+    <button class="queue-list__refresh-btn" (click)="onRefresh()" [disabled]="loading" title="Refresh queues">
+      <span class="refresh-icon" [class.spinning]="loading">↻</span>
+    </button>
+  </div>
+
+  <div class="queue-list__search">
+    <div class="search-input-wrapper">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Search queues..."
+        [(ngModel)]="searchTerm"
+        (input)="onSearchInput()"
+      />
+      <button
+        *ngIf="searchTerm"
+        class="clear-btn"
+        (click)="onClearSearch()"
+        title="Clear search"
+      >×</button>
+    </div>
+  </div>
+
+  <div class="queue-list__filters">
+    <div class="filter-row">
+      <select
+        class="filter-select"
+        [(ngModel)]="statusFilter"
+        (change)="onStatusChange()"
+      >
+        <option *ngFor="let opt of statusOptions" [value]="opt.value">
+          {{ opt.label }} ({{ getQueueCountByStatus(opt.value) }})
+        </option>
+      </select>
+    </div>
+
+    <div class="sort-row">
+      <select
+        class="sort-select"
+        [(ngModel)]="sortField"
+        (change)="onSortFieldChange()"
+      >
+        <option *ngFor="let opt of sortOptions" [value]="opt.value">
+          {{ opt.label }}
+        </option>
+      </select>
+      <button
+        class="sort-direction-btn"
+        (click)="onSortDirectionToggle()"
+        [title]="sortDirection === 'asc' ? 'Ascending' : 'Descending'"
+      >
+        {{ sortDirection === 'asc' ? '↑' : '↓' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="queue-list__items" *ngIf="!loading">
+    <div
+      *ngFor="let queue of queues; trackBy: trackByQueueName"
+      class="queue-item"
+      [class.queue-item--selected]="isSelected(queue)"
+      [class.queue-item--disabled]="queue.status === 'disabled'"
+      [class.queue-item--poison]="queue.status === 'poison'"
+      (click)="onQueueClick(queue)"
+    >
+      <div class="queue-item__main">
+        <div class="queue-item__name" [title]="queue.queueName">
+          {{ queue.displayName }}
+        </div>
+        <div class="queue-item__meta">
+          <app-status-badge
+            [status]="queue.status"
+            [size]="'small'"
+            [showIcon]="true"
+          ></app-status-badge>
+        </div>
+      </div>
+      <div class="queue-item__stats">
+        <div class="queue-item__stat">
+          <span class="stat-value">{{ queue.messageCount }}</span>
+          <span class="stat-label">msgs</span>
+        </div>
+        <div class="queue-item__stat" *ngIf="queue.oldestMessageAge !== null">
+          <span class="stat-value">{{ formatAge(queue.oldestMessageAge) }}</span>
+          <span class="stat-label">age</span>
+        </div>
+        <div class="queue-item__stat" *ngIf="queue.poisonMessageCount > 0">
+          <span class="stat-value stat-value--poison">{{ queue.poisonMessageCount }}</span>
+          <span class="stat-label">poison</span>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="queues.length === 0" class="queue-list__empty">
+      <span class="empty-icon">📭</span>
+      <span class="empty-text">No queues found</span>
+    </div>
+  </div>
+
+  <div class="queue-list__loading" *ngIf="loading">
+    <div class="loading-spinner"></div>
+    <span>Loading queues...</span>
+  </div>
+</div>

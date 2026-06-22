@@ -1,0 +1,102 @@
+<div class="related-messages" *ngIf="conversationMessages">
+  <div class="related-messages__header">
+    <h3 class="related-messages__title">Related Messages</h3>
+    <span class="related-messages__count">
+      {{ currentIndex + 1 }} of {{ totalCount }}
+    </span>
+  </div>
+
+  <div class="related-messages__navigation">
+    <button
+      class="related-messages__nav-btn"
+      [disabled]="!hasPrevious"
+      (click)="onPrevious()"
+      title="Previous message">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+      <span>Previous</span>
+    </button>
+
+    <div class="related-messages__progress">
+      <div class="related-messages__progress-bar">
+        <div
+          class="related-messages__progress-fill"
+          [style.width.%]="totalCount > 0 ? ((currentIndex + 1) / totalCount) * 100 : 0">
+        </div>
+      </div>
+    </div>
+
+    <button
+      class="related-messages__nav-btn"
+      [disabled]="!hasNext"
+      (click)="onNext()"
+      title="Next message">
+      <span>Next</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 18 15 12 9 6"></polyline>
+      </svg>
+    </button>
+  </div>
+
+  <div class="related-messages__diagram" *ngIf="dialogState">
+    <div class="related-messages__diagram-label">Conversation State</div>
+    <div class="related-messages__state-flow" [ngClass]="getDialogStateClass()">
+      <div class="related-messages__state-node related-messages__state-node--start">
+        <div class="related-messages__state-dot"></div>
+        <span>Start</span>
+      </div>
+      <div class="related-messages__state-line"></div>
+      <div class="related-messages__state-node related-messages__state-node--current">
+        <div class="related-messages__state-dot"></div>
+        <span>{{ getDialogStateLabel() }}</span>
+      </div>
+      <div class="related-messages__state-line related-messages__state-line--dashed"></div>
+      <div class="related-messages__state-node related-messages__state-node--end">
+        <div class="related-messages__state-dot"></div>
+        <span>End</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="related-messages__list" *ngIf="messages.length > 0">
+    <div class="related-messages__list-header">
+      <span>Message Timeline</span>
+    </div>
+    <div class="related-messages__list-items">
+      <button
+        *ngFor="let message of messages; let i = index"
+        class="related-messages__item"
+        [class.related-messages__item--current]="isCurrentMessage(i)"
+        (click)="onMessageClick(message)">
+        <div class="related-messages__item-indicator">
+          <span class="related-messages__item-number">{{ message.sequenceNumber }}</span>
+        </div>
+        <div class="related-messages__item-content">
+          <div class="related-messages__item-type">{{ message.messageTypeName }}</div>
+          <div class="related-messages__item-details">
+            <span class="related-messages__item-status" [ngClass]="getStatusClass(message.status)">
+              {{ message.status }}
+            </span>
+            <span class="related-messages__item-size">{{ formatSize(message.messageSize) }}</span>
+          </div>
+        </div>
+        <div class="related-messages__item-time">
+          {{ formatTimestamp(message.enqueuedTime) }}
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="related-messages related-messages--empty" *ngIf="!conversationMessages">
+  <div class="related-messages__empty-state">
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+      <circle cx="9" cy="7" r="4"></circle>
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+    </svg>
+    <p>No related messages</p>
+  </div>
+</div>

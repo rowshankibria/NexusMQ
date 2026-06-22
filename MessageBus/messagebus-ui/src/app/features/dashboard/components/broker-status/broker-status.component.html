@@ -1,0 +1,73 @@
+<div class="broker-status" [ngClass]="enabledClass">
+  <div class="broker-status__header">
+    <h3 class="broker-status__title">Broker Status</h3>
+    <app-status-badge
+      *ngIf="brokerStatus"
+      [status]="statusType"
+      size="small"
+    ></app-status-badge>
+  </div>
+
+  <div class="broker-status__content">
+    <ng-container *ngIf="!loading; else loadingTemplate">
+      <ng-container *ngIf="brokerStatus; else emptyTemplate">
+        <div class="broker-status__indicator">
+          <span class="broker-status__indicator-icon" [class.broker-status__indicator-icon--enabled]="brokerStatus.isEnabled">
+            {{ brokerStatus.isEnabled ? '●' : '○' }}
+          </span>
+          <span class="broker-status__indicator-text">
+            Broker {{ brokerStatus.isEnabled ? 'Enabled' : 'Disabled' }}
+          </span>
+        </div>
+
+        <div class="broker-status__details">
+          <div class="broker-status__detail">
+            <span class="broker-status__detail-label">Database</span>
+            <span class="broker-status__detail-value">{{ brokerStatus.databaseName }}</span>
+          </div>
+
+          <div class="broker-status__detail">
+            <span class="broker-status__detail-label">Server</span>
+            <span class="broker-status__detail-value">{{ brokerStatus.serverName }}</span>
+          </div>
+
+          <div class="broker-status__detail">
+            <span class="broker-status__detail-label">Status</span>
+            <span class="broker-status__detail-value">{{ brokerStatus.status }}</span>
+          </div>
+
+          <div class="broker-status__detail" *ngIf="brokerStatus.brokerGuid">
+            <span class="broker-status__detail-label">GUID</span>
+            <span class="broker-status__detail-value" [title]="brokerStatus.brokerGuid">
+              {{ truncateGuid(brokerStatus.brokerGuid) }}
+            </span>
+          </div>
+        </div>
+
+        <div class="broker-status__warnings" *ngIf="hasWarnings">
+          <div class="broker-status__warnings-header">
+            <span class="broker-status__warnings-icon">⚠</span>
+            <span class="broker-status__warnings-title">Warnings</span>
+          </div>
+          <ul class="broker-status__warnings-list">
+            <li *ngFor="let warning of brokerStatus.warnings" class="broker-status__warning-item">
+              {{ warning }}
+            </li>
+          </ul>
+        </div>
+      </ng-container>
+    </ng-container>
+
+    <ng-template #loadingTemplate>
+      <div class="broker-status__loading">
+        <app-loading-spinner size="small" message="Loading..."></app-loading-spinner>
+      </div>
+    </ng-template>
+
+    <ng-template #emptyTemplate>
+      <div class="broker-status__empty">
+        <span class="broker-status__empty-text">Unable to retrieve broker status</span>
+      </div>
+    </ng-template>
+  </div>
+</div>

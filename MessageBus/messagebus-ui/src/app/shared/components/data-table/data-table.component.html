@@ -1,0 +1,130 @@
+<div class="data-table-container">
+  <div class="data-table-wrapper">
+    <table class="data-table">
+      <thead class="data-table__header">
+        <tr>
+          <th
+            *ngFor="let column of columns"
+            class="data-table__header-cell"
+            [class.data-table__header-cell--sortable]="column.sortable"
+            [style.width]="column.width"
+            [style.text-align]="column.align || 'left'"
+            (click)="onSort(column)"
+          >
+            <span class="data-table__header-content">
+              {{ column.header }}
+              <span class="data-table__sort-icon" *ngIf="column.sortable">
+                <ng-container *ngIf="sortColumn === column.key">
+                  {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                </ng-container>
+                <ng-container *ngIf="sortColumn !== column.key">⇅</ng-container>
+              </span>
+            </span>
+          </th>
+          <th class="data-table__header-cell data-table__header-cell--actions" *ngIf="actionsTemplate">
+            Actions
+          </th>
+        </tr>
+      </thead>
+
+      <tbody class="data-table__body">
+        <ng-container *ngIf="!loading; else loadingBody">
+          <ng-container *ngIf="displayedData.length > 0; else emptyBody">
+            <tr
+              *ngFor="let row of displayedData; trackBy: trackByIndex"
+              class="data-table__row"
+              (click)="onRowClick(row)"
+            >
+              <td
+                *ngFor="let column of columns"
+                class="data-table__cell"
+                [style.text-align]="column.align || 'left'"
+              >
+                <ng-container *ngIf="cellTemplate; else defaultCell">
+                  <ng-container
+                    *ngTemplateOutlet="cellTemplate; context: { $implicit: row, column: column, value: getCellValue(row, column.key) }"
+                  ></ng-container>
+                </ng-container>
+                <ng-template #defaultCell>
+                  {{ getCellValue(row, column.key) }}
+                </ng-template>
+              </td>
+              <td class="data-table__cell data-table__cell--actions" *ngIf="actionsTemplate">
+                <ng-container *ngTemplateOutlet="actionsTemplate; context: { $implicit: row }"></ng-container>
+              </td>
+            </tr>
+          </ng-container>
+        </ng-container>
+
+        <ng-template #loadingBody>
+          <tr *ngFor="let i of [1, 2, 3, 4, 5]" class="data-table__row data-table__row--loading">
+            <td [attr.colspan]="columns.length + (actionsTemplate ? 1 : 0)" class="data-table__cell">
+              <div class="data-table__loading-bar"></div>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template #emptyBody>
+          <tr class="data-table__row data-table__row--empty">
+            <td [attr.colspan]="columns.length + (actionsTemplate ? 1 : 0)" class="data-table__cell data-table__cell--empty">
+              {{ emptyMessage }}
+            </td>
+          </tr>
+        </ng-template>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="data-table__pagination" *ngIf="showPagination && totalItems > 0">
+    <div class="data-table__pagination-info">
+      <span>Showing {{ startItem }} - {{ endItem }} of {{ totalItems }}</span>
+    </div>
+
+    <div class="data-table__pagination-controls">
+      <div class="data-table__page-size">
+        <label for="pageSize">Rows per page:</label>
+        <select id="pageSize" [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+          <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</option>
+        </select>
+      </div>
+
+      <div class="data-table__page-nav">
+        <button
+          class="data-table__nav-button"
+          [disabled]="currentPage === 0"
+          (click)="goToPage(0)"
+          title="First page"
+        >
+          «
+        </button>
+        <button
+          class="data-table__nav-button"
+          [disabled]="currentPage === 0"
+          (click)="previousPage()"
+          title="Previous page"
+        >
+          ‹
+        </button>
+        <span class="data-table__page-info">
+          Page {{ currentPage + 1 }} of {{ totalPages }}
+        </span>
+        <button
+          class="data-table__nav-button"
+          [disabled]="currentPage >= totalPages - 1"
+          (click)="nextPage()"
+          title="Next page"
+        >
+          ›
+        </button>
+        <button
+          class="data-table__nav-button"
+          [disabled]="currentPage >= totalPages - 1"
+          (click)="goToPage(totalPages - 1)"
+          title="Last page"
+        >
+          »
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

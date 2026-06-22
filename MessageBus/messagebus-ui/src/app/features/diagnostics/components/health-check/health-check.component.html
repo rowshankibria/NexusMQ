@@ -1,0 +1,116 @@
+<div class="health-check">
+  <div class="panel-header">
+    <h2>Health Check Actions</h2>
+    <button
+      class="btn btn-secondary"
+      (click)="clearResults()"
+      *ngIf="results.length > 0">
+      Clear Results
+    </button>
+  </div>
+
+  <p class="panel-description">
+    Run diagnostic checks to verify the health and configuration of your Service Broker infrastructure.
+  </p>
+
+  <!-- Health Check Buttons -->
+  <div class="checks-grid">
+    <div
+      class="check-card"
+      *ngFor="let check of healthChecks; trackBy: trackByCheck"
+      [class.running]="isRunning(check.type)"
+      [class.has-result]="getResult(check.type)">
+      <div class="check-icon">{{ check.icon }}</div>
+      <div class="check-content">
+        <h3>{{ check.label }}</h3>
+        <p>{{ check.description }}</p>
+
+        <div class="check-input" *ngIf="check.requiresInput">
+          <label>{{ check.inputLabel }}</label>
+          <input
+            type="number"
+            class="input-small"
+            [(ngModel)]="oldMessagesDays"
+            [placeholder]="check.inputPlaceholder || ''"
+            min="1">
+        </div>
+      </div>
+      <div class="check-actions">
+        <button
+          class="btn btn-primary"
+          (click)="runCheck(check)"
+          [disabled]="isRunning(check.type)">
+          <span *ngIf="!isRunning(check.type)">Run</span>
+          <span *ngIf="isRunning(check.type)" class="spinner-small"></span>
+        </button>
+
+        <!-- Quick result indicator -->
+        <div
+          class="result-indicator"
+          *ngIf="getResult(check.type) as result"
+          [ngClass]="getStatusClass(result.status)">
+          <span class="indicator-icon">{{ getStatusIcon(result.status) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results Section -->
+  <div class="results-section" *ngIf="results.length > 0">
+    <h3>Check Results</h3>
+
+    <div class="results-list">
+      <div
+        class="result-card"
+        *ngFor="let result of results; trackBy: trackByResult"
+        [ngClass]="getStatusClass(result.status)">
+        <div class="result-header">
+          <div class="result-title">
+            <span
+              class="status-badge"
+              [style.backgroundColor]="getStatusColor(result.status)">
+              {{ getStatusIcon(result.status) }}
+            </span>
+            <h4>{{ result.name }}</h4>
+          </div>
+          <div class="result-meta">
+            <span class="duration">{{ formatDuration(result.durationMs) }}</span>
+            <span class="timestamp">{{ result.executedAt | date:'medium' }}</span>
+          </div>
+        </div>
+
+        <p class="result-message">{{ result.message }}</p>
+
+        <!-- Details Accordion -->
+        <div class="result-details" *ngIf="result.details.length > 0">
+          <details>
+            <summary>{{ result.details.length }} details</summary>
+            <div class="details-list">
+              <div
+                class="detail-item"
+                *ngFor="let detail of result.details; trackBy: trackByDetail"
+                [ngClass]="getStatusClass(detail.status)">
+                <span
+                  class="detail-status"
+                  [style.color]="getStatusColor(detail.status)">
+                  {{ getStatusIcon(detail.status) }}
+                </span>
+                <div class="detail-content">
+                  <span class="detail-item-name">{{ detail.item }}</span>
+                  <span class="detail-message">{{ detail.message }}</span>
+                </div>
+              </div>
+            </div>
+          </details>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- No Results -->
+  <div class="no-results" *ngIf="results.length === 0">
+    <span class="no-results-icon">🩺</span>
+    <p>No health checks have been run yet</p>
+    <span class="no-results-hint">Click "Run" on any check above to diagnose your system</span>
+  </div>
+</div>

@@ -1,0 +1,231 @@
+<div class="alert-rules">
+  <div class="panel-header">
+    <h2>Alert Rules</h2>
+    <button class="btn btn-primary" (click)="openCreateForm()">
+      <span class="icon">+</span>
+      Add Rule
+    </button>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="rules.length === 0 && !loading">
+    <span class="empty-icon">🔔</span>
+    <p>No alert rules configured</p>
+    <span class="empty-hint">Create rules to be notified about important system events</span>
+    <button class="btn btn-primary" (click)="openCreateForm()">Create First Rule</button>
+  </div>
+
+  <!-- Rules List -->
+  <div class="rules-list" *ngIf="rules.length > 0">
+    <div
+      class="rule-card"
+      *ngFor="let rule of rules; trackBy: trackByRule"
+      [class.disabled]="!rule.isEnabled">
+      <div class="rule-header">
+        <div class="rule-info">
+          <span class="rule-name">{{ rule.name }}</span>
+          <span class="severity-badge" [ngClass]="getSeverityClass(rule.severity)">
+            {{ getSeverityLabel(rule.severity) }}
+          </span>
+        </div>
+        <div class="rule-actions">
+          <label class="toggle-switch">
+            <input
+              type="checkbox"
+              [checked]="rule.isEnabled"
+              (change)="toggleRule(rule)">
+            <span class="toggle-slider"></span>
+          </label>
+          <button class="btn-action" (click)="editRule(rule)" title="Edit">
+            ✏️
+          </button>
+          <button class="btn-action btn-delete" (click)="deleteRule(rule)" title="Delete">
+            🗑️
+          </button>
+        </div>
+      </div>
+
+      <p class="rule-description" *ngIf="rule.description">{{ rule.description }}</p>
+
+      <div class="rule-condition">
+        <span class="condition-label">Condition:</span>
+        <span class="condition-value">
+          {{ getMetricLabel(rule.metricType) }}
+          {{ getOperatorLabel(rule.condition.operator) }}
+          {{ rule.threshold }}
+          for {{ rule.duration }} min
+        </span>
+      </div>
+
+      <div class="rule-meta">
+        <div class="meta-item">
+          <span class="meta-label">Actions:</span>
+          <span class="meta-value">
+            <span class="action-tag" *ngFor="let action of rule.actions">
+              {{ action.type }}
+            </span>
+            <span *ngIf="rule.actions.length === 0" class="no-actions">None</span>
+          </span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Last Triggered:</span>
+          <span class="meta-value">{{ formatDate(rule.lastTriggered) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Modal -->
+  <div class="modal-overlay" *ngIf="showFormModal" (click)="closeForm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ formMode === 'create' ? 'Create Alert Rule' : 'Edit Alert Rule' }}</h3>
+        <button class="btn-close" (click)="closeForm()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Rule Name *</label>
+          <input
+            type="text"
+            class="form-input"
+            [(ngModel)]="formData.name"
+            placeholder="e.g., High Queue Depth Alert">
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <textarea
+            class="form-input"
+            rows="2"
+            [(ngModel)]="formData.description"
+            placeholder="Describe when this alert should fire..."></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Metric Type *</label>
+            <select class="form-input" [(ngModel)]="formData.metricType">
+              <option *ngFor="let type of metricTypes" [value]="type.value">
+                {{ type.label }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Severity *</label>
+            <select class="form-input" [(ngModel)]="formData.severity">
+              <option *ngFor="let sev of severities" [value]="sev.value">
+                {{ sev.label }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h4>Threshold Condition</h4>
+          <div class="condition-builder">
+            <span class="metric-preview">{{ getMetricLabel(formData.metricType) }}</span>
+            <select class="form-input operator-select" [(ngModel)]="formData.operator">
+              <option *ngFor="let op of operators" [value]="op.value">
+                {{ op.label }}
+              </option>
+            </select>
+            <input
+              type="number"
+              class="form-input threshold-input"
+              [(ngModel)]="formData.threshold"
+              min="0">
+            <span class="condition-text">for</span>
+            <input
+              type="number"
+              class="form-input duration-input"
+              [(ngModel)]="formData.duration"
+              min="1">
+            <span class="condition-text">minutes</span>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="section-header">
+            <h4>Actions</h4>
+            <div class="action-buttons">
+              <button
+                *ngFor="let actionType of actionTypes"
+                class="btn btn-sm btn-secondary"
+                (click)="addAction(actionType.value)">
+                + {{ actionType.label }}
+              </button>
+            </div>
+          </div>
+
+          <div class="actions-list" *ngIf="formData.actions.length > 0">
+            <div
+              class="action-card"
+              *ngFor="let action of formData.actions; let i = index; trackBy: trackByAction">
+              <div class="action-header">
+                <span class="action-type">{{ action.type }}</span>
+                <button class="btn-remove" (click)="removeAction(i)">×</button>
+              </div>
+              <div class="action-config">
+                <!-- Email Config -->
+                <ng-container *ngIf="action.type === 'Email'">
+                  <input
+                    type="text"
+                    class="form-input"
+                    placeholder="Recipients (comma-separated)"
+                    [ngModel]="$any(action.config).recipients?.join(', ')"
+                    (ngModelChange)="$any(action.config).recipients = $event.split(',').map((e: string) => e.trim()).filter((e: string) => e)">
+                </ng-container>
+
+                <!-- Webhook Config -->
+                <ng-container *ngIf="action.type === 'Webhook'">
+                  <input
+                    type="url"
+                    class="form-input"
+                    placeholder="Webhook URL"
+                    [(ngModel)]="$any(action.config).url">
+                </ng-container>
+
+                <!-- Slack Config -->
+                <ng-container *ngIf="action.type === 'Slack'">
+                  <input
+                    type="url"
+                    class="form-input"
+                    placeholder="Slack Webhook URL"
+                    [(ngModel)]="$any(action.config).webhookUrl">
+                  <input
+                    type="text"
+                    class="form-input"
+                    placeholder="Channel (optional)"
+                    [(ngModel)]="$any(action.config).channel">
+                </ng-container>
+              </div>
+            </div>
+          </div>
+
+          <div class="no-actions-hint" *ngIf="formData.actions.length === 0">
+            No actions configured. Add at least one action above.
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="formData.isEnabled">
+            <span>Enable this rule</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeForm()">Cancel</button>
+        <button
+          class="btn btn-primary"
+          (click)="saveRule()"
+          [disabled]="!formData.name">
+          {{ formMode === 'create' ? 'Create Rule' : 'Save Changes' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

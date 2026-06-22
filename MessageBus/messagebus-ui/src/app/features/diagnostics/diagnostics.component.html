@@ -1,0 +1,83 @@
+<div class="diagnostics">
+  <header class="diagnostics-header">
+    <div class="header-content">
+      <h1>Diagnostics & Monitoring</h1>
+      <p class="subtitle">Monitor Service Broker health, performance, and system status</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-secondary" (click)="refresh()" [disabled]="isLoading()">
+        <span class="icon">↻</span>
+        Refresh
+      </button>
+      <span class="last-updated" *ngIf="state?.lastUpdated">
+        Last updated: {{ state.lastUpdated | date:'medium' }}
+      </span>
+    </div>
+  </header>
+
+  <div class="error-banner" *ngIf="state?.error">
+    <span class="error-icon">⚠️</span>
+    <span class="error-message">{{ state.error }}</span>
+    <button class="btn-dismiss" (click)="dismissError()">×</button>
+  </div>
+
+  <nav class="tab-navigation">
+    <button
+      *ngFor="let tab of tabs"
+      class="tab-button"
+      [class.active]="isActiveTab(tab)"
+      (click)="selectTab(tab)">
+      <span class="tab-icon">{{ getTabIcon(tab) }}</span>
+      <span class="tab-label">{{ tabLabels[tab] }}</span>
+    </button>
+  </nav>
+
+  <div class="tab-content">
+    <div class="loading-overlay" *ngIf="isLoading()">
+      <div class="spinner"></div>
+      <span>Loading...</span>
+    </div>
+
+    <ng-container [ngSwitch]="state?.activeTab">
+      <app-broker-status-panel
+        *ngSwitchCase="'broker-status'"
+        [brokerStatus]="state?.brokerStatus"
+        [loading]="state?.brokerStatusLoading || false">
+      </app-broker-status-panel>
+
+      <app-transmission-queue
+        *ngSwitchCase="'transmission-queue'"
+        [entries]="state?.transmissionQueue || []"
+        [filter]="state?.transmissionQueueFilter"
+        [loading]="state?.transmissionQueueLoading || false">
+      </app-transmission-queue>
+
+      <app-dialog-errors
+        *ngSwitchCase="'dialog-errors'"
+        [errors]="state?.dialogErrors || []"
+        [filter]="state?.dialogErrorFilter"
+        [loading]="state?.dialogErrorsLoading || false">
+      </app-dialog-errors>
+
+      <app-performance-metrics
+        *ngSwitchCase="'performance'"
+        [metrics]="state?.performanceMetrics"
+        [timeRange]="state?.metricsTimeRange || '1h'"
+        [loading]="state?.metricsLoading || false">
+      </app-performance-metrics>
+
+      <app-alert-rules
+        *ngSwitchCase="'alerts'"
+        [rules]="state?.alertRules || []"
+        [editingRule]="state?.editingRule"
+        [loading]="state?.alertRulesLoading || false">
+      </app-alert-rules>
+
+      <app-health-check
+        *ngSwitchCase="'health-checks'"
+        [results]="state?.healthCheckResults || []"
+        [runningCheck]="state?.healthCheckRunning">
+      </app-health-check>
+    </ng-container>
+  </div>
+</div>

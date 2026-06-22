@@ -1,0 +1,24 @@
+<div class="metric-card" [ngClass]="variantClass">
+  <div class="metric-card__header">
+    <span class="metric-card__icon" *ngIf="icon">{{ icon }}</span>
+    <span class="metric-card__label">{{ label }}</span>
+  </div>
+
+  <div class="metric-card__body">
+    <ng-container *ngIf="!loading; else loadingTemplate">
+      <span class="metric-card__value">{{ value }}</span>
+      <span class="metric-card__trend" *ngIf="trend !== 'none'" [ngClass]="trendClass">
+        {{ trendIcon }} {{ trendValue }}
+      </span>
+    </ng-container>
+    <ng-template #loadingTemplate>
+      <div class="metric-card__loading">
+        <span class="metric-card__loading-bar"></span>
+      </div>
+    </ng-template>
+  </div>
+
+  <div class="metric-card__footer" *ngIf="subtitle">
+    <span class="metric-card__subtitle">{{ subtitle }}</span>
+  </div>
+</div>

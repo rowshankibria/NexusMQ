@@ -1,0 +1,68 @@
+<div class="dashboard">
+  <header class="dashboard__header">
+    <h1 class="dashboard__title">Service Broker Dashboard</h1>
+    <div class="dashboard__actions">
+      <span class="dashboard__last-updated" *ngIf="state?.lastUpdated">
+        Last updated: {{ state.lastUpdated | date:'medium' }}
+      </span>
+      <button
+        class="dashboard__refresh-btn"
+        (click)="onRefresh()"
+        [disabled]="state?.loading"
+      >
+        ↻ Refresh
+      </button>
+    </div>
+  </header>
+
+  <app-loading-spinner
+    *ngIf="state?.loading && !state?.systemHealth"
+    [overlay]="true"
+    message="Loading dashboard..."
+  ></app-loading-spinner>
+
+  <div class="dashboard__error" *ngIf="state?.error">
+    <span class="dashboard__error-icon">⚠</span>
+    <span class="dashboard__error-message">{{ state.error }}</span>
+    <button class="dashboard__retry-btn" (click)="onRefresh()">Retry</button>
+  </div>
+
+  <div class="dashboard__content" *ngIf="state && !state.error">
+    <section class="dashboard__section dashboard__section--full">
+      <app-system-health-summary
+        [systemHealth]="state.systemHealth"
+        [loading]="state.loading"
+      ></app-system-health-summary>
+    </section>
+
+    <section class="dashboard__section dashboard__section--sidebar">
+      <app-broker-status
+        [brokerStatus]="state.brokerStatus"
+        [loading]="state.loading"
+      ></app-broker-status>
+    </section>
+
+    <section class="dashboard__section dashboard__section--main">
+      <app-queue-health-grid
+        [queues]="state.queueHealthList"
+        [loading]="state.loading"
+      ></app-queue-health-grid>
+    </section>
+
+    <section class="dashboard__section dashboard__section--chart">
+      <app-throughput-chart
+        [throughput]="state.throughput"
+        [selectedTimeRange]="selectedTimeRange"
+        [loading]="state.loading"
+        (timeRangeChange)="onTimeRangeChange($event)"
+      ></app-throughput-chart>
+    </section>
+
+    <section class="dashboard__section dashboard__section--alerts">
+      <app-dead-letter-summary
+        [summary]="state.deadLetterSummary"
+        [loading]="state.loading"
+      ></app-dead-letter-summary>
+    </section>
+  </div>
+</div>

@@ -1,0 +1,68 @@
+<div class="dead-letter-summary" [ngClass]="statusClass">
+  <div class="dead-letter-summary__header">
+    <h3 class="dead-letter-summary__title">Dead Letters & Poison</h3>
+    <span class="dead-letter-summary__status-icon" *ngIf="hasIssues">⚠</span>
+  </div>
+
+  <div class="dead-letter-summary__content">
+    <ng-container *ngIf="!loading; else loadingTemplate">
+      <ng-container *ngIf="summary; else emptyTemplate">
+        <div class="dead-letter-summary__stats">
+          <div class="dead-letter-summary__stat" [class.dead-letter-summary__stat--critical]="summary.poisonMessageCount > 0">
+            <span class="dead-letter-summary__stat-value">{{ summary.poisonMessageCount }}</span>
+            <span class="dead-letter-summary__stat-label">Poison Messages</span>
+            <span class="dead-letter-summary__stat-age" *ngIf="summary.oldestPoisonAge">
+              Oldest: {{ formatAge(summary.oldestPoisonAge) }}
+            </span>
+          </div>
+
+          <div class="dead-letter-summary__stat" [class.dead-letter-summary__stat--warning]="summary.deadLetterCount > 0">
+            <span class="dead-letter-summary__stat-value">{{ summary.deadLetterCount }}</span>
+            <span class="dead-letter-summary__stat-label">Dead Letters</span>
+            <span class="dead-letter-summary__stat-age" *ngIf="summary.oldestDeadLetterAge">
+              Oldest: {{ formatAge(summary.oldestDeadLetterAge) }}
+            </span>
+          </div>
+        </div>
+
+        <div class="dead-letter-summary__recent" *ngIf="summary.recentPoisonMessages?.length">
+          <h4 class="dead-letter-summary__recent-title">Recent Poison Messages</h4>
+          <ul class="dead-letter-summary__recent-list">
+            <li
+              *ngFor="let msg of summary.recentPoisonMessages; trackBy: trackByPoisonId"
+              class="dead-letter-summary__recent-item"
+            >
+              <div class="dead-letter-summary__recent-header">
+                <span class="dead-letter-summary__recent-queue">{{ msg.queueName }}</span>
+                <span class="dead-letter-summary__recent-retries">{{ msg.retryCount }} retries</span>
+              </div>
+              <div class="dead-letter-summary__recent-error" [title]="msg.errorMessage">
+                {{ truncateMessage(msg.errorMessage) }}
+              </div>
+              <div class="dead-letter-summary__recent-time">
+                {{ formatTimestamp(msg.timestamp) }}
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="dead-letter-summary__empty-state" *ngIf="!hasIssues">
+          <span class="dead-letter-summary__empty-icon">✓</span>
+          <span class="dead-letter-summary__empty-text">No dead letters or poison messages</span>
+        </div>
+      </ng-container>
+    </ng-container>
+
+    <ng-template #loadingTemplate>
+      <div class="dead-letter-summary__loading">
+        <app-loading-spinner size="small" message="Loading..."></app-loading-spinner>
+      </div>
+    </ng-template>
+
+    <ng-template #emptyTemplate>
+      <div class="dead-letter-summary__empty-state">
+        <span class="dead-letter-summary__empty-text">No data available</span>
+      </div>
+    </ng-template>
+  </div>
+</div>

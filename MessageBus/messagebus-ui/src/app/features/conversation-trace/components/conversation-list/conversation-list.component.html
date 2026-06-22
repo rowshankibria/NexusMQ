@@ -1,0 +1,183 @@
+<div class="conversation-list">
+  <!-- Filters -->
+  <div class="filters">
+    <div class="filter-row">
+      <div class="filter-group">
+        <label for="stateFilter">State</label>
+        <select id="stateFilter" [(ngModel)]="stateFilter" (change)="onStateFilterChange()">
+          <option *ngFor="let option of stateOptions" [value]="option.value">{{ option.label }}</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="dateFrom">From Date</label>
+        <input type="date" id="dateFrom" [(ngModel)]="dateFrom" (change)="onDateFromChange()">
+      </div>
+
+      <div class="filter-group">
+        <label for="dateTo">To Date</label>
+        <input type="date" id="dateTo" [(ngModel)]="dateTo" (change)="onDateToChange()">
+      </div>
+    </div>
+
+    <div class="filter-row">
+      <div class="filter-group">
+        <label for="initiatorService">Initiator Service</label>
+        <select id="initiatorService" [(ngModel)]="initiatorServiceFilter" (change)="onInitiatorServiceChange()">
+          <option value="">All Services</option>
+          <option *ngFor="let service of services" [value]="service">{{ service }}</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="targetService">Target Service</label>
+        <select id="targetService" [(ngModel)]="targetServiceFilter" (change)="onTargetServiceChange()">
+          <option value="">All Services</option>
+          <option *ngFor="let service of services" [value]="service">{{ service }}</option>
+        </select>
+      </div>
+
+      <div class="filter-group search">
+        <label for="searchTerm">Search</label>
+        <input
+          type="text"
+          id="searchTerm"
+          [(ngModel)]="searchTerm"
+          (input)="onSearchChange()"
+          placeholder="Search conversations..."
+        >
+      </div>
+
+      <button class="btn-reset" (click)="onResetFilters()">Reset Filters</button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <span>Loading conversations...</span>
+  </div>
+
+  <!-- Table -->
+  <div *ngIf="!loading" class="table-container">
+    <table class="conversation-table">
+      <thead>
+        <tr>
+          <th (click)="onSort('conversationHandle')" class="sortable">
+            Conversation Handle
+            <span class="sort-icon">{{ getSortIcon('conversationHandle') }}</span>
+          </th>
+          <th (click)="onSort('initiatorService')" class="sortable">
+            Initiator
+            <span class="sort-icon">{{ getSortIcon('initiatorService') }}</span>
+          </th>
+          <th (click)="onSort('targetService')" class="sortable">
+            Target
+            <span class="sort-icon">{{ getSortIcon('targetService') }}</span>
+          </th>
+          <th (click)="onSort('state')" class="sortable">
+            State
+            <span class="sort-icon">{{ getSortIcon('state') }}</span>
+          </th>
+          <th (click)="onSort('createdAt')" class="sortable">
+            Created
+            <span class="sort-icon">{{ getSortIcon('createdAt') }}</span>
+          </th>
+          <th (click)="onSort('lastActivity')" class="sortable">
+            Last Activity
+            <span class="sort-icon">{{ getSortIcon('lastActivity') }}</span>
+          </th>
+          <th (click)="onSort('messageCount')" class="sortable">
+            Messages
+            <span class="sort-icon">{{ getSortIcon('messageCount') }}</span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          *ngFor="let conversation of conversations; trackBy: trackByHandle"
+          [class.selected]="isSelected(conversation)"
+          (click)="selectConversation(conversation)"
+        >
+          <td class="handle-cell">
+            <span class="handle">{{ conversation.conversationHandle }}</span>
+          </td>
+          <td class="service-cell">{{ conversation.initiatorService }}</td>
+          <td class="service-cell">{{ conversation.targetService }}</td>
+          <td class="state-cell">
+            <app-status-badge
+              [status]="getStateStatus(conversation.state)"
+              [label]="stateLabels[conversation.state]"
+            ></app-status-badge>
+          </td>
+          <td class="date-cell">{{ formatDate(conversation.createdAt) }}</td>
+          <td class="date-cell">
+            <span class="activity-time">{{ formatDate(conversation.lastActivity) }}</span>
+            <span class="activity-age">({{ formatAge(conversation.lastActivity) }})</span>
+          </td>
+          <td class="count-cell">{{ conversation.messageCount }}</td>
+        </tr>
+        <tr *ngIf="conversations.length === 0">
+          <td colspan="7" class="empty-state">
+            No conversations found
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div *ngIf="!loading && conversations.length > 0" class="pagination">
+    <div class="page-size">
+      <label for="pageSize">Rows per page:</label>
+      <select id="pageSize" [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+        <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</option>
+      </select>
+    </div>
+
+    <div class="page-info">
+      Showing {{ currentPage * pageSize + 1 }} - {{ Math.min((currentPage + 1) * pageSize, totalCount) }} of {{ totalCount }}
+    </div>
+
+    <div class="page-controls">
+      <button
+        class="page-btn"
+        [disabled]="currentPage === 0"
+        (click)="onPageChange(0)"
+      >
+        &laquo;
+      </button>
+      <button
+        class="page-btn"
+        [disabled]="currentPage === 0"
+        (click)="onPageChange(currentPage - 1)"
+      >
+        &lsaquo;
+      </button>
+
+      <button
+        *ngFor="let page of pageNumbers"
+        class="page-btn"
+        [class.active]="page === currentPage"
+        (click)="onPageChange(page)"
+      >
+        {{ page + 1 }}
+      </button>
+
+      <button
+        class="page-btn"
+        [disabled]="currentPage >= totalPages - 1"
+        (click)="onPageChange(currentPage + 1)"
+      >
+        &rsaquo;
+      </button>
+      <button
+        class="page-btn"
+        [disabled]="currentPage >= totalPages - 1"
+        (click)="onPageChange(totalPages - 1)"
+      >
+        &raquo;
+      </button>
+    </div>
+  </div>
+</div>

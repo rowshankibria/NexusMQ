@@ -1,0 +1,206 @@
+<div class="message-table">
+  <div class="message-table__toolbar">
+    <div class="toolbar-filters">
+      <select
+        class="filter-select"
+        [(ngModel)]="filter.status"
+        (change)="onStatusFilterChange()"
+      >
+        <option *ngFor="let opt of statusOptions" [value]="opt.value">
+          {{ opt.label }}
+        </option>
+      </select>
+
+      <select
+        class="filter-select"
+        [(ngModel)]="filter.messageType"
+        (change)="onTypeFilterChange()"
+      >
+        <option value="">All Message Types</option>
+        <option *ngFor="let type of messageTypes" [value]="type">
+          {{ type }}
+        </option>
+      </select>
+    </div>
+
+    <div class="toolbar-actions" *ngIf="hasSelection">
+      <span class="selection-count">{{ selectedMessages.length }} selected</span>
+      <button class="bulk-btn bulk-btn--danger" (click)="onBulkDelete()" title="Delete selected messages">
+        <span class="btn-icon">🗑️</span>
+        Delete
+      </button>
+      <button class="bulk-btn" (click)="onBulkMarkReceived()" title="Mark selected as received">
+        <span class="btn-icon">✓</span>
+        Mark Received
+      </button>
+      <button class="bulk-btn" (click)="onBulkExportJson()" title="Export selected as JSON">
+        <span class="btn-icon">📤</span>
+        Export JSON
+      </button>
+    </div>
+
+    <div class="toolbar-actions" *ngIf="!hasSelection && messages.length > 0">
+      <button class="bulk-btn" (click)="onBulkExportJson()" title="Export all messages as JSON">
+        <span class="btn-icon">📤</span>
+        Export All
+      </button>
+    </div>
+  </div>
+
+  <div class="message-table__container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th class="col-checkbox">
+            <input
+              type="checkbox"
+              [checked]="allSelected"
+              [indeterminate]="someSelected"
+              (click)="onSelectAllClick($event)"
+              title="Select all"
+            />
+          </th>
+          <th class="col-seq sortable" (click)="onSort('sequenceNumber')">
+            Seq # <span class="sort-icon">{{ getSortIcon('sequenceNumber') }}</span>
+          </th>
+          <th class="col-type sortable" (click)="onSort('messageTypeName')">
+            Type <span class="sort-icon">{{ getSortIcon('messageTypeName') }}</span>
+          </th>
+          <th class="col-priority sortable" (click)="onSort('priority')">
+            Priority <span class="sort-icon">{{ getSortIcon('priority') }}</span>
+          </th>
+          <th class="col-status sortable" (click)="onSort('status')">
+            Status <span class="sort-icon">{{ getSortIcon('status') }}</span>
+          </th>
+          <th class="col-size sortable" (click)="onSort('messageSize')">
+            Size <span class="sort-icon">{{ getSortIcon('messageSize') }}</span>
+          </th>
+          <th class="col-age sortable" (click)="onSort('age')">
+            Age <span class="sort-icon">{{ getSortIcon('age') }}</span>
+          </th>
+          <th class="col-timestamp sortable" (click)="onSort('enqueuedTime')">
+            Enqueued <span class="sort-icon">{{ getSortIcon('enqueuedTime') }}</span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          *ngFor="let message of messages; trackBy: trackByMessage"
+          class="data-row"
+          [class.data-row--selected]="isSelected(message)"
+          [class.data-row--poison]="message.status === 'poison'"
+          (click)="onRowClick(message)"
+        >
+          <td class="col-checkbox" (click)="$event.stopPropagation()">
+            <input
+              type="checkbox"
+              [checked]="isSelected(message)"
+              (click)="onCheckboxClick($event, message)"
+            />
+          </td>
+          <td class="col-seq">
+            <span class="seq-number">{{ message.sequenceNumber }}</span>
+          </td>
+          <td class="col-type">
+            <span class="type-name" [title]="message.messageTypeName">
+              {{ message.messageTypeName | slice:0:30 }}{{ message.messageTypeName.length > 30 ? '...' : '' }}
+            </span>
+          </td>
+          <td class="col-priority">
+            <span class="priority-badge" [class.priority-high]="message.priority > 5">
+              {{ message.priority }}
+            </span>
+          </td>
+          <td class="col-status">
+            <app-status-badge
+              [status]="getStatusType(message.status)"
+              [size]="'small'"
+              [showIcon]="true"
+            ></app-status-badge>
+          </td>
+          <td class="col-size">
+            <span class="size-value">{{ formatSize(message.messageSize) }}</span>
+          </td>
+          <td class="col-age">
+            <span class="age-value" [class.age-warning]="message.age > 3600" [class.age-critical]="message.age > 86400">
+              {{ formatAge(message.age) }}
+            </span>
+          </td>
+          <td class="col-timestamp">
+            <span class="timestamp-value">{{ formatTimestamp(message.enqueuedTime) }}</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="empty-state" *ngIf="messages.length === 0 && !loading">
+      <span class="empty-icon">📭</span>
+      <span class="empty-text">No messages found</span>
+    </div>
+
+    <app-loading-spinner
+      *ngIf="loading"
+      [overlay]="true"
+      [message]="'Loading messages...'"
+    ></app-loading-spinner>
+  </div>
+
+  <div class="message-table__pagination" *ngIf="totalMessages > 0">
+    <div class="pagination-info">
+      Showing {{ startItem }} - {{ endItem }} of {{ totalMessages }} messages
+    </div>
+
+    <div class="pagination-controls">
+      <select
+        class="page-size-select"
+        [(ngModel)]="pageSize"
+        (change)="onPageSizeChange()"
+      >
+        <option *ngFor="let size of pageSizeOptions" [value]="size">
+          {{ size }} per page
+        </option>
+      </select>
+
+      <div class="page-buttons">
+        <button
+          class="page-btn"
+          (click)="goToPage(0)"
+          [disabled]="currentPage === 0"
+          title="First page"
+        >«</button>
+        <button
+          class="page-btn"
+          (click)="previousPage()"
+          [disabled]="currentPage === 0"
+          title="Previous page"
+        >‹</button>
+        <span class="page-indicator">
+          {{ currentPage + 1 }} / {{ totalPages }}
+        </span>
+        <button
+          class="page-btn"
+          (click)="nextPage()"
+          [disabled]="currentPage >= totalPages - 1"
+          title="Next page"
+        >›</button>
+        <button
+          class="page-btn"
+          (click)="goToPage(totalPages - 1)"
+          [disabled]="currentPage >= totalPages - 1"
+          title="Last page"
+        >»</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<app-confirm-dialog
+  *ngIf="showBulkDeleteConfirm"
+  title="Delete Messages"
+  [message]="'Are you sure you want to delete ' + selectedMessages.length + ' selected message(s)? This action cannot be undone.'"
+  confirmText="Delete Messages"
+  cancelText="Cancel"
+  type="danger"
+  (confirmed)="onConfirmBulkDelete()"
+  (cancelled)="onCancelBulkDelete()"
+></app-confirm-dialog>

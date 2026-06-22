@@ -1,0 +1,82 @@
+<div class="export-conversation">
+  <div class="export-header">
+    <h4>Export Conversation</h4>
+  </div>
+
+  <div class="export-content" *ngIf="canExport">
+    <!-- Export Info -->
+    <div class="export-info">
+      <div class="info-item">
+        <span class="info-label">Messages</span>
+        <span class="info-value">{{ messageCount }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Transitions</span>
+        <span class="info-value">{{ transitionCount }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Est. Size</span>
+        <span class="info-value">{{ estimatedSize }}</span>
+      </div>
+    </div>
+
+    <!-- Export Options -->
+    <div class="export-options">
+      <label class="option-checkbox">
+        <input
+          type="checkbox"
+          [(ngModel)]="includeMessageBodies"
+        >
+        <span class="checkbox-label">Include message bodies</span>
+      </label>
+      <label class="option-checkbox">
+        <input
+          type="checkbox"
+          [(ngModel)]="includeStateTransitions"
+        >
+        <span class="checkbox-label">Include state transitions</span>
+      </label>
+    </div>
+
+    <!-- Export Actions -->
+    <div class="export-actions">
+      <button
+        class="btn-export btn-json"
+        [disabled]="loading"
+        (click)="onDownloadJson()"
+      >
+        <span class="btn-icon">📄</span>
+        <span class="btn-text">Download JSON</span>
+      </button>
+
+      <button
+        class="btn-export btn-csv"
+        [disabled]="loading"
+        (click)="onDownloadCsv()"
+      >
+        <span class="btn-icon">📊</span>
+        <span class="btn-text">Download CSV</span>
+      </button>
+
+      <button
+        class="btn-export btn-copy"
+        [disabled]="loading || !timeline"
+        [class.success]="copySuccess"
+        (click)="onCopyToClipboard()"
+      >
+        <span class="btn-icon">{{ copySuccess ? '✓' : '📋' }}</span>
+        <span class="btn-text">{{ copySuccess ? 'Copied!' : 'Copy to Clipboard' }}</span>
+      </button>
+    </div>
+
+    <!-- Loading indicator -->
+    <div *ngIf="loading" class="loading-indicator">
+      <div class="spinner"></div>
+      <span>Exporting...</span>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="!canExport">
+    <p>Select a conversation to export</p>
+  </div>
+</div>

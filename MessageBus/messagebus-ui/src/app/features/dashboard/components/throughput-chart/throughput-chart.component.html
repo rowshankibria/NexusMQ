@@ -1,0 +1,77 @@
+<div class="throughput-chart">
+  <div class="throughput-chart__header">
+    <h3 class="throughput-chart__title">Message Throughput</h3>
+    <div class="throughput-chart__controls">
+      <div class="throughput-chart__time-toggle">
+        <button
+          *ngFor="let range of timeRanges"
+          class="throughput-chart__time-btn"
+          [class.throughput-chart__time-btn--active]="selectedTimeRange === range"
+          (click)="onTimeRangeSelect(range)"
+        >
+          {{ range }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="throughput-chart__content">
+    <ng-container *ngIf="!loading; else loadingTemplate">
+      <ng-container *ngIf="throughput?.dataPoints?.length; else emptyTemplate">
+        <div class="throughput-chart__canvas-wrapper">
+          <canvas
+            #chartCanvas
+            class="throughput-chart__canvas"
+          ></canvas>
+        </div>
+
+        <div class="throughput-chart__legend">
+          <span class="throughput-chart__legend-item throughput-chart__legend-item--received">
+            <span class="throughput-chart__legend-dot"></span>
+            Received
+          </span>
+          <span class="throughput-chart__legend-item throughput-chart__legend-item--sent">
+            <span class="throughput-chart__legend-dot"></span>
+            Sent
+          </span>
+          <span class="throughput-chart__legend-item throughput-chart__legend-item--processed">
+            <span class="throughput-chart__legend-dot"></span>
+            Processed
+          </span>
+        </div>
+
+        <div class="throughput-chart__summary">
+          <div class="throughput-chart__summary-item">
+            <span class="throughput-chart__summary-label">Total Received</span>
+            <span class="throughput-chart__summary-value">{{ throughput.totalReceived }}</span>
+          </div>
+          <div class="throughput-chart__summary-item">
+            <span class="throughput-chart__summary-label">Total Sent</span>
+            <span class="throughput-chart__summary-value">{{ throughput.totalSent }}</span>
+          </div>
+          <div class="throughput-chart__summary-item">
+            <span class="throughput-chart__summary-label">Avg/min</span>
+            <span class="throughput-chart__summary-value">{{ throughput.averageThroughput | number:'1.1-1' }}</span>
+          </div>
+          <div class="throughput-chart__summary-item">
+            <span class="throughput-chart__summary-label">Peak/min</span>
+            <span class="throughput-chart__summary-value">{{ throughput.peakThroughput }}</span>
+          </div>
+        </div>
+      </ng-container>
+    </ng-container>
+
+    <ng-template #loadingTemplate>
+      <div class="throughput-chart__loading">
+        <app-loading-spinner size="medium" message="Loading chart..."></app-loading-spinner>
+      </div>
+    </ng-template>
+
+    <ng-template #emptyTemplate>
+      <div class="throughput-chart__empty">
+        <span class="throughput-chart__empty-icon">📊</span>
+        <span class="throughput-chart__empty-text">No throughput data available for {{ timeRangeLabel }}</span>
+      </div>
+    </ng-template>
+  </div>
+</div>

@@ -1,0 +1,77 @@
+<div class="queue-explorer">
+  <aside class="queue-explorer__sidebar">
+    <app-queue-list
+      [queues]="state?.filteredQueues || []"
+      [selectedQueue]="state?.selectedQueue || null"
+      [filter]="state?.filter!"
+      [loading]="state?.loading || false"
+      (queueSelected)="onQueueSelected($event)"
+      (filterChanged)="onFilterChanged($event)"
+      (refreshRequested)="onRefreshQueues()"
+    ></app-queue-list>
+  </aside>
+
+  <main class="queue-explorer__main">
+    <div class="queue-explorer__content" *ngIf="state?.selectedQueue">
+      <section class="queue-explorer__detail-section">
+        <app-queue-detail
+          [queue]="state?.selectedQueue || null"
+          [statistics]="state?.selectedQueueStats || null"
+        ></app-queue-detail>
+      </section>
+
+      <section class="queue-explorer__actions-section">
+        <app-queue-actions
+          [queue]="state?.selectedQueue || null"
+          [loading]="state?.loading || false"
+          (receiveMessage)="onReceiveMessage()"
+          (togglePause)="onTogglePause($event)"
+          (purgeQueue)="onPurgeQueue()"
+          (refresh)="onRefreshQueue()"
+        ></app-queue-actions>
+      </section>
+
+      <section class="queue-explorer__messages-section">
+        <div class="section-header">
+          <h3 class="section-title">Messages</h3>
+          <span class="message-count">{{ state?.totalMessages || 0 }} total</span>
+        </div>
+        <app-message-table
+          [messages]="state?.messages || []"
+          [totalMessages]="state?.totalMessages || 0"
+          [currentPage]="state?.currentPage || 0"
+          [pageSize]="state?.pageSize || 25"
+          [loading]="state?.messagesLoading || false"
+          [selectedMessages]="state?.selectedMessages || []"
+          [filter]="state?.messageFilter!"
+          [messageTypes]="messageTypes"
+          (filterChanged)="onMessageFilterChanged($event)"
+          (pageChanged)="onPageChanged($event)"
+          (messageSelected)="onMessageSelected($event)"
+          (selectAll)="onSelectAllMessages()"
+          (deselectAll)="onDeselectAllMessages()"
+          (deleteMessages)="onDeleteMessages($event)"
+          (markAsReceived)="onMarkAsReceived($event)"
+          (exportJson)="onExportJson()"
+          (viewMessage)="onViewMessage($event)"
+        ></app-message-table>
+      </section>
+    </div>
+
+    <div class="queue-explorer__empty" *ngIf="!state?.selectedQueue">
+      <div class="empty-state">
+        <span class="empty-icon">📋</span>
+        <h2 class="empty-title">Queue Explorer</h2>
+        <p class="empty-text">Select a queue from the list to view its details and messages</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="queue-explorer__error" *ngIf="state?.error">
+  <div class="error-banner">
+    <span class="error-icon">⚠️</span>
+    <span class="error-message">{{ state?.error }}</span>
+    <button class="error-dismiss" (click)="onRefreshQueues()">Retry</button>
+  </div>
+</div>

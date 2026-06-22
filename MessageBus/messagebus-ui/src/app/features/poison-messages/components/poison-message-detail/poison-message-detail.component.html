@@ -1,0 +1,261 @@
+<div class="detail-panel" [class.open]="poisonMessage || deadLetterMessage">
+  <div class="panel-backdrop" (click)="onClose()"></div>
+
+  <div class="panel-content">
+    <!-- Header -->
+    <div class="panel-header">
+      <div class="header-title">
+        <h2 *ngIf="isPoisonMessage">Poison Message Details</h2>
+        <h2 *ngIf="!isPoisonMessage && deadLetterMessage">Dead-Letter Message Details</h2>
+      </div>
+      <button class="close-btn" (click)="onClose()" title="Close">✕</button>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-container" *ngIf="loading">
+      <app-loading-spinner size="large"></app-loading-spinner>
+      <span>Loading message details...</span>
+    </div>
+
+    <!-- Content -->
+    <div class="panel-body" *ngIf="!loading && message">
+      <!-- Action Buttons (only for poison messages) -->
+      <div class="action-bar" *ngIf="isPoisonMessage && poisonMessage">
+        <button
+          class="btn btn-primary"
+          (click)="onRetry()"
+          [disabled]="operationLoading"
+          title="Retry this message"
+        >
+          <span *ngIf="!operationLoading">↻ Retry</span>
+          <span *ngIf="operationLoading">Processing...</span>
+        </button>
+
+        <button
+          class="btn btn-warning"
+          *ngIf="queueDisabled"
+          (click)="onReEnableQueue()"
+          [disabled]="operationLoading"
+          title="Re-enable the queue"
+        >
+          ▶ Re-enable Queue
+        </button>
+
+        <button
+          class="btn btn-danger"
+          (click)="onPurge()"
+          [disabled]="operationLoading"
+          title="Move to dead-letter queue"
+        >
+          ✕ Purge
+        </button>
+      </div>
+
+      <!-- Queue Status Warning -->
+      <div class="queue-warning" *ngIf="isPoisonMessage && queueDisabled">
+        <span class="warning-icon">⚠</span>
+        <span>Queue is currently disabled. Re-enable it before retrying.</span>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button
+          class="tab"
+          [class.active]="activeTab === 'details'"
+          (click)="setActiveTab('details')"
+        >
+          Details
+        </button>
+        <button
+          class="tab"
+          [class.active]="activeTab === 'body'"
+          (click)="setActiveTab('body')"
+        >
+          Message Body
+        </button>
+        <button
+          class="tab"
+          [class.active]="activeTab === 'error'"
+          (click)="setActiveTab('error')"
+          *ngIf="errorMessage || errorTrace"
+        >
+          Error
+        </button>
+        <button
+          class="tab"
+          [class.active]="activeTab === 'history'"
+          (click)="setActiveTab('history')"
+          *ngIf="isPoisonMessage && retryHistory.length > 0"
+        >
+          Retry History ({{ retryHistory.length }})
+        </button>
+      </div>
+
+      <!-- Tab Content -->
+      <div class="tab-content">
+        <!-- Details Tab -->
+        <div class="tab-pane" *ngIf="activeTab === 'details'">
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Queue Name</label>
+              <span class="queue-badge">{{ message.queueName }}</span>
+            </div>
+
+            <div class="detail-item">
+              <label>Conversation Handle</label>
+              <span class="mono">{{ message.conversationHandle }}</span>
+            </div>
+
+            <div class="detail-item">
+              <label>Message Type</label>
+              <span class="type-badge">{{ message.messageTypeName }}</span>
+            </div>
+
+            <div class="detail-item">
+              <label>Service Name</label>
+              <span>{{ message.serviceName }}</span>
+            </div>
+
+            <div class="detail-item">
+              <label>Message Size</label>
+              <span>{{ formatBytes(message.messageSize) }}</span>
+            </div>
+
+            <div class="detail-item" *ngIf="isPoisonMessage && poisonMessage">
+              <label>Retry Count</label>
+              <span class="retry-badge" [class.max-reached]="poisonMessage.retryCount >= poisonMessage.maxRetries">
+                {{ poisonMessage.retryCount }} / {{ poisonMessage.maxRetries }}
+              </span>
+            </div>
+
+            <div class="detail-item" *ngIf="isPoisonMessage && poisonMessage">
+              <label>Priority</label>
+              <span>{{ poisonMessage.priority }}</span>
+            </div>
+
+            <div class="detail-item" *ngIf="!isPoisonMessage && deadLetterMessage">
+              <label>Reason</label>
+              <span class="reason-badge">{{ getReasonLabel(deadLetterMessage.reason) }}</span>
+            </div>
+
+            <div class="detail-item full-width" *ngIf="!isPoisonMessage && deadLetterMessage?.reasonDescription">
+              <label>Reason Description</label>
+              <span>{{ deadLetterMessage.reasonDescription }}</span>
+            </div>
+
+            <div class="detail-item full-width" *ngIf="!isPoisonMessage && deadLetterMessage?.resolutionNotes">
+              <label>Resolution Notes</label>
+              <span>{{ deadLetterMessage.resolutionNotes }}</span>
+            </div>
+          </div>
+
+          <div class="timestamps">
+            <h4>Timestamps</h4>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <label>Original Enqueue Time</label>
+                <span>{{ formatDate(message.originalEnqueueTime) }}</span>
+              </div>
+
+              <div class="detail-item" *ngIf="isPoisonMessage && poisonMessage">
+                <label>Moved to Poison</label>
+                <span>{{ formatDate(poisonMessage.movedToPoisonAt) }} ({{ formatAge(poisonMessage.movedToPoisonAt) }})</span>
+              </div>
+
+              <div class="detail-item" *ngIf="isPoisonMessage && poisonMessage?.lastRetryAt">
+                <label>Last Retry</label>
+                <span>{{ formatDate(poisonMessage.lastRetryAt) }} ({{ formatAge(poisonMessage.lastRetryAt) }})</span>
+              </div>
+
+              <div class="detail-item" *ngIf="!isPoisonMessage && deadLetterMessage">
+                <label>Dead-Lettered</label>
+                <span>{{ formatDate(deadLetterMessage.createdAt) }} ({{ formatAge(deadLetterMessage.createdAt) }})</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Queue Status (for poison messages) -->
+          <div class="queue-status" *ngIf="isPoisonMessage && poisonMessage?.queueStatus">
+            <h4>Queue Status</h4>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <label>Receive Enabled</label>
+                <app-status-badge
+                  [status]="poisonMessage.queueStatus.isReceiveEnabled ? 'active' : 'disabled'"
+                  size="small"
+                ></app-status-badge>
+              </div>
+              <div class="detail-item">
+                <label>Enqueue Enabled</label>
+                <app-status-badge
+                  [status]="poisonMessage.queueStatus.isEnqueueEnabled ? 'active' : 'disabled'"
+                  size="small"
+                ></app-status-badge>
+              </div>
+              <div class="detail-item">
+                <label>Message Count</label>
+                <span>{{ poisonMessage.queueStatus.messageCount }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Poison Message Count</label>
+                <span class="poison-count">{{ poisonMessage.queueStatus.poisonMessageCount }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Message Body Tab -->
+        <div class="tab-pane" *ngIf="activeTab === 'body'">
+          <app-message-body-viewer
+            [messageBody]="messageBody"
+            [messageType]="message.messageTypeName"
+          ></app-message-body-viewer>
+        </div>
+
+        <!-- Error Tab -->
+        <div class="tab-pane" *ngIf="activeTab === 'error'">
+          <div class="error-section" *ngIf="errorMessage">
+            <h4>Error Message</h4>
+            <div class="error-message">{{ errorMessage }}</div>
+          </div>
+
+          <div class="error-section" *ngIf="errorTrace">
+            <h4>Stack Trace</h4>
+            <pre class="stack-trace">{{ errorTrace }}</pre>
+          </div>
+        </div>
+
+        <!-- Retry History Tab -->
+        <div class="tab-pane" *ngIf="activeTab === 'history' && isPoisonMessage">
+          <div class="retry-timeline">
+            <div
+              class="timeline-item"
+              *ngFor="let entry of retryHistory; let i = index"
+              [class.success]="entry.success"
+              [class.failure]="!entry.success"
+            >
+              <div class="timeline-marker">
+                <span class="attempt-number">{{ entry.attemptNumber }}</span>
+              </div>
+              <div class="timeline-content">
+                <div class="timeline-header">
+                  <span class="timestamp">{{ formatDate(entry.attemptedAt) }}</span>
+                  <span class="status-badge" [class.success]="entry.success" [class.failure]="!entry.success">
+                    {{ entry.success ? 'Success' : 'Failed' }}
+                  </span>
+                </div>
+                <div class="timeline-body" *ngIf="!entry.success">
+                  <p class="error-msg">{{ entry.errorMessage }}</p>
+                  <details *ngIf="entry.errorTrace">
+                    <summary>Stack Trace</summary>
+                    <pre class="mini-trace">{{ entry.errorTrace }}</pre>
+                  </details>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,116 @@
+<div class="conversation-context" *ngIf="context">
+  <div class="conversation-context__header">
+    <h3 class="conversation-context__title">Conversation Context</h3>
+    <span
+      class="conversation-context__state-badge"
+      [ngClass]="getDialogStateClass(context.dialogState)"
+      [style.--state-color]="getDialogStateColor(context.dialogState)">
+      <span class="conversation-context__state-dot"></span>
+      {{ getDialogStateLabel(context.dialogState) }}
+    </span>
+  </div>
+
+  <div class="conversation-context__body">
+    <div class="conversation-context__services">
+      <div class="conversation-context__service">
+        <div class="conversation-context__service-label">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <span>Initiator</span>
+          <span class="conversation-context__is-initiator" *ngIf="context.isInitiator">(This Service)</span>
+        </div>
+        <div class="conversation-context__service-name">{{ context.initiatorServiceName }}</div>
+      </div>
+
+      <div class="conversation-context__arrow">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </div>
+
+      <div class="conversation-context__service">
+        <div class="conversation-context__service-label">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+          <span>Target</span>
+          <span class="conversation-context__is-initiator" *ngIf="!context.isInitiator">(This Service)</span>
+        </div>
+        <div class="conversation-context__service-name">{{ context.targetServiceName }}</div>
+      </div>
+    </div>
+
+    <div class="conversation-context__details">
+      <div class="conversation-context__detail-row">
+        <div class="conversation-context__detail">
+          <span class="conversation-context__detail-label">Dialog Lifetime</span>
+          <span class="conversation-context__detail-value">{{ formatLifetime(context.dialogLifetime) }}</span>
+        </div>
+
+        <div class="conversation-context__detail">
+          <span class="conversation-context__detail-label">Created</span>
+          <span class="conversation-context__detail-value">{{ formatTimestamp(context.createdAt) }}</span>
+        </div>
+      </div>
+
+      <div class="conversation-context__sequences">
+        <div class="conversation-context__sequence">
+          <div class="conversation-context__sequence-header">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+            <span>Send Sequence</span>
+          </div>
+          <span class="conversation-context__sequence-value">{{ context.sendSequenceNumber }}</span>
+        </div>
+
+        <div class="conversation-context__sequence">
+          <div class="conversation-context__sequence-header">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline>
+              <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path>
+            </svg>
+            <span>Receive Sequence</span>
+          </div>
+          <span class="conversation-context__sequence-value">{{ context.receiveSequenceNumber }}</span>
+        </div>
+      </div>
+
+      <div class="conversation-context__far-service" *ngIf="context.farServiceName">
+        <span class="conversation-context__detail-label">Far Service</span>
+        <span class="conversation-context__detail-value">{{ context.farServiceName }}</span>
+      </div>
+
+      <div class="conversation-context__far-broker" *ngIf="context.farBrokerId">
+        <span class="conversation-context__detail-label">Far Broker ID</span>
+        <div class="conversation-context__detail-value conversation-context__detail-value--copyable">
+          <code>{{ context.farBrokerId }}</code>
+          <button
+            class="conversation-context__copy-btn"
+            (click)="copyValue(context.farBrokerId)"
+            title="Copy to clipboard">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="conversation-context conversation-context--empty" *ngIf="!context">
+  <div class="conversation-context__empty-state">
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+    </svg>
+    <p>No conversation context available</p>
+  </div>
+</div>

@@ -1,0 +1,112 @@
+<div class="message-metadata" *ngIf="metadata">
+  <div class="message-metadata__header">
+    <h3 class="message-metadata__title">Message Metadata</h3>
+  </div>
+
+  <div class="message-metadata__grid">
+    <div class="message-metadata__item">
+      <span class="message-metadata__label">Conversation Handle</span>
+      <div class="message-metadata__value message-metadata__value--copyable">
+        <code>{{ metadata.conversationHandle }}</code>
+        <button
+          class="message-metadata__copy-btn"
+          (click)="copyValue(metadata.conversationHandle)"
+          title="Copy to clipboard">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="message-metadata__item">
+      <span class="message-metadata__label">Conversation ID</span>
+      <div class="message-metadata__value message-metadata__value--copyable">
+        <code>{{ metadata.conversationId }}</code>
+        <button
+          class="message-metadata__copy-btn"
+          (click)="copyValue(metadata.conversationId)"
+          title="Copy to clipboard">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="message-metadata__item">
+      <span class="message-metadata__label">Message Type</span>
+      <span class="message-metadata__value">{{ metadata.messageTypeName }}</span>
+    </div>
+
+    <div class="message-metadata__item">
+      <span class="message-metadata__label">Sequence Number</span>
+      <span class="message-metadata__value message-metadata__value--number">{{ metadata.sequenceNumber }}</span>
+    </div>
+
+    <div class="message-metadata__item">
+      <span class="message-metadata__label">Priority</span>
+      <span class="message-metadata__value">
+        <span class="message-metadata__priority" [ngClass]="getPriorityClass(metadata.priority)">
+          {{ metadata.priority }}
+        </span>
+      </span>
+    </div>
+
+    <div class="message-metadata__item">
+      <span class="message-metadata__label">Status</span>
+      <span class="message-metadata__value">
+        <span class="message-metadata__status" [ngClass]="getStatusClass(metadata.status)">
+          {{ metadata.status }}
+        </span>
+      </span>
+    </div>
+
+    <div class="message-metadata__item">
+      <span class="message-metadata__label">Enqueue Timestamp</span>
+      <span class="message-metadata__value">{{ formatTimestamp(metadata.enqueuedTime) }}</span>
+    </div>
+
+    <div class="message-metadata__item">
+      <span class="message-metadata__label">Size</span>
+      <span class="message-metadata__value">{{ formatSize(metadata.messageSize) }}</span>
+    </div>
+
+    <div class="message-metadata__item">
+      <span class="message-metadata__label">Service Name</span>
+      <span class="message-metadata__value">{{ metadata.serviceName }}</span>
+    </div>
+
+    <div class="message-metadata__item">
+      <span class="message-metadata__label">Queue Name</span>
+      <span class="message-metadata__value">{{ metadata.queueName }}</span>
+    </div>
+
+    <div class="message-metadata__item">
+      <span class="message-metadata__label">Validation</span>
+      <span class="message-metadata__value">{{ metadata.validation }}</span>
+    </div>
+
+    <div class="message-metadata__item">
+      <span class="message-metadata__label">Conversation Group ID</span>
+      <div class="message-metadata__value message-metadata__value--copyable">
+        <code>{{ metadata.conversationGroupId }}</code>
+        <button
+          class="message-metadata__copy-btn"
+          (click)="copyValue(metadata.conversationGroupId)"
+          title="Copy to clipboard">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="message-metadata message-metadata--empty" *ngIf="!metadata">
+  <p class="message-metadata__empty-text">No message selected</p>
+</div>

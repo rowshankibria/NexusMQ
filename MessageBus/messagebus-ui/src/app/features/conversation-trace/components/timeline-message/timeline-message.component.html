@@ -1,0 +1,71 @@
+<div
+  class="timeline-message"
+  [ngClass]="{
+    'sent': message.direction === 'sent',
+    'received': message.direction === 'received',
+    'selected': selected,
+    'has-error': message.status === 'error'
+  }"
+>
+  <!-- Header -->
+  <div class="message-header">
+    <div class="direction-indicator" [ngClass]="message.direction">
+      <span class="direction-icon">{{ directionIcon }}</span>
+      <span class="direction-label">{{ directionLabel }}</span>
+    </div>
+    <div class="message-type">{{ message.messageType }}</div>
+    <div class="message-actions">
+      <button class="btn-inspect" (click)="onInspectClick($event)" title="Inspect message">
+        <span class="icon">🔍</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Details -->
+  <div class="message-details">
+    <div class="detail-row">
+      <div class="detail-item">
+        <span class="detail-label">Sent</span>
+        <span class="detail-value">{{ formatTimestamp(message.sentTimestamp) }}</span>
+      </div>
+      <div class="detail-item" *ngIf="message.receivedTimestamp">
+        <span class="detail-label">Received</span>
+        <span class="detail-value">{{ formatTimestamp(message.receivedTimestamp) }}</span>
+      </div>
+    </div>
+
+    <div class="detail-row">
+      <div class="detail-item">
+        <span class="detail-label">Processing</span>
+        <span class="detail-value" [ngClass]="{'slow': message.processingDuration && message.processingDuration > 5000}">
+          {{ processingDurationText }}
+        </span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Size</span>
+        <span class="detail-value">{{ formatSize(message.messageSize) }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Priority</span>
+        <span class="detail-value priority-badge" [ngClass]="priorityClass">{{ priorityLabel }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Indicator -->
+  <div class="message-status">
+    <span class="status-badge" [ngClass]="statusClass">{{ statusLabel }}</span>
+    <span *ngIf="message.sequenceNumber" class="sequence-number">#{{ message.sequenceNumber }}</span>
+  </div>
+
+  <!-- Body Preview -->
+  <div class="message-body-preview" *ngIf="message.messageBodyPreview">
+    <code>{{ truncateBody(message.messageBodyPreview, 150) }}</code>
+  </div>
+
+  <!-- Error Message -->
+  <div class="message-error" *ngIf="message.errorMessage">
+    <span class="error-icon">⚠️</span>
+    <span class="error-text">{{ message.errorMessage }}</span>
+  </div>
+</div>

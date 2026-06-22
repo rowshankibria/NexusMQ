@@ -1,0 +1,218 @@
+<div class="poison-message-list">
+  <!-- Filters -->
+  <div class="filters">
+    <div class="filter-row">
+      <div class="search-input">
+        <input
+          type="text"
+          placeholder="Search messages..."
+          [ngModel]="filter?.searchTerm || ''"
+          (ngModelChange)="onSearchChange($event)"
+        />
+      </div>
+
+      <div class="filter-select">
+        <select
+          [ngModel]="filter?.queueName || ''"
+          (ngModelChange)="onQueueFilterChange($event)"
+        >
+          <option value="">All Queues</option>
+          <option *ngFor="let queue of queueNames" [value]="queue">{{ queue }}</option>
+        </select>
+      </div>
+
+      <div class="filter-select">
+        <select
+          [ngModel]="filter?.messageType || ''"
+          (ngModelChange)="onMessageTypeFilterChange($event)"
+        >
+          <option value="">All Message Types</option>
+          <option *ngFor="let type of messageTypes" [value]="type">{{ type }}</option>
+        </select>
+      </div>
+
+      <button class="btn btn-secondary" (click)="onResetFilter()">
+        Reset Filters
+      </button>
+    </div>
+
+    <!-- Bulk Actions -->
+    <div class="bulk-actions" *ngIf="selectedMessages.length > 0">
+      <span class="selection-count">{{ selectedMessages.length }} selected</span>
+      <button class="btn btn-primary" (click)="onBulkRetry()">
+        Retry Selected
+      </button>
+      <button class="btn btn-danger" (click)="onBulkPurge()">
+        Purge Selected
+      </button>
+      <button class="btn btn-secondary" (click)="deselectAll.emit()">
+        Clear Selection
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-overlay" *ngIf="loading">
+    <div class="spinner"></div>
+    <span>Loading poison messages...</span>
+  </div>
+
+  <!-- Table -->
+  <div class="table-container" [class.loading]="loading">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th class="checkbox-column">
+            <input
+              type="checkbox"
+              [checked]="allSelected"
+              [indeterminate]="someSelected"
+              (change)="onSelectAllChange()"
+            />
+          </th>
+          <th class="sortable" (click)="onSortChange('queueName')">
+            Queue Name {{ getSortIcon('queueName') }}
+          </th>
+          <th>Conversation Handle</th>
+          <th class="sortable" (click)="onSortChange('messageType')">
+            Message Type {{ getSortIcon('messageType') }}
+          </th>
+          <th>Error Message</th>
+          <th class="sortable" (click)="onSortChange('retryCount')">
+            Retries {{ getSortIcon('retryCount') }}
+          </th>
+          <th class="sortable" (click)="onSortChange('movedToPoisonAt')">
+            Moved to Poison {{ getSortIcon('movedToPoisonAt') }}
+          </th>
+          <th class="sortable" (click)="onSortChange('lastRetryAt')">
+            Last Retry {{ getSortIcon('lastRetryAt') }}
+          </th>
+          <th class="actions-column">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          *ngFor="let message of messages; trackBy: trackById"
+          [class.selected]="isSelected(message)"
+          (click)="onRowClick(message)"
+        >
+          <td class="checkbox-column" (click)="$event.stopPropagation()">
+            <input
+              type="checkbox"
+              [checked]="isSelected(message)"
+              (change)="onCheckboxChange($event, message)"
+            />
+          </td>
+          <td class="queue-name">
+            <span class="queue-badge">{{ message.queueName }}</span>
+          </td>
+          <td class="conversation-handle">
+            <span class="truncate" [title]="message.conversationHandle">
+              {{ message.conversationHandle | slice:0:8 }}...
+            </span>
+          </td>
+          <td class="message-type">
+            <span class="type-badge">{{ message.messageTypeName }}</span>
+          </td>
+          <td class="error-message">
+            <span class="truncate error-text" [title]="message.errorMessage">
+              {{ message.errorMessage | slice:0:50 }}{{ message.errorMessage.length > 50 ? '...' : '' }}
+            </span>
+          </td>
+          <td class="retry-count">
+            <span class="retry-badge" [class.max-reached]="message.retryCount >= message.maxRetries">
+              {{ message.retryCount }}/{{ message.maxRetries }}
+            </span>
+          </td>
+          <td class="timestamp">
+            <span [title]="formatDate(message.movedToPoisonAt)">
+              {{ formatAge(message.movedToPoisonAt) }}
+            </span>
+          </td>
+          <td class="timestamp">
+            <span *ngIf="message.lastRetryAt" [title]="formatDate(message.lastRetryAt)">
+              {{ formatAge(message.lastRetryAt) }}
+            </span>
+            <span *ngIf="!message.lastRetryAt">-</span>
+          </td>
+          <td class="actions-column">
+            <div class="action-buttons">
+              <button
+                class="btn btn-sm btn-primary"
+                title="Retry"
+                (click)="onRetryClick($event, message)"
+              >
+                ↻
+              </button>
+              <button
+                class="btn btn-sm btn-danger"
+                title="Purge"
+                (click)="onPurgeClick($event, message)"
+              >
+                ✕
+              </button>
+            </div>
+          </td>
+        </tr>
+        <tr *ngIf="messages.length === 0 && !loading">
+          <td colspan="9" class="empty-state">
+            <div class="empty-message">
+              <span class="empty-icon">📭</span>
+              <p>No poison messages found</p>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination" *ngIf="totalItems > 0">
+    <div class="page-size">
+      <label>Rows per page:</label>
+      <select [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange()">
+        <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</option>
+      </select>
+    </div>
+
+    <div class="page-info">
+      {{ startItem }} - {{ endItem }} of {{ totalItems }}
+    </div>
+
+    <div class="page-controls">
+      <button
+        class="btn btn-sm"
+        [disabled]="currentPage === 0"
+        (click)="goToPage(0)"
+        title="First page"
+      >
+        ⟨⟨
+      </button>
+      <button
+        class="btn btn-sm"
+        [disabled]="currentPage === 0"
+        (click)="previousPage()"
+        title="Previous page"
+      >
+        ⟨
+      </button>
+      <span class="page-number">Page {{ currentPage + 1 }} of {{ totalPages }}</span>
+      <button
+        class="btn btn-sm"
+        [disabled]="currentPage >= totalPages - 1"
+        (click)="nextPage()"
+        title="Next page"
+      >
+        ⟩
+      </button>
+      <button
+        class="btn btn-sm"
+        [disabled]="currentPage >= totalPages - 1"
+        (click)="goToPage(totalPages - 1)"
+        title="Last page"
+      >
+        ⟩⟩
+      </button>
+    </div>
+  </div>
+</div>

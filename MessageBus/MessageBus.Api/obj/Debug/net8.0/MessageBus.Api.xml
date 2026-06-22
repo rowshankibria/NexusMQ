@@ -1,0 +1,1356 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>MessageBus.Api</name>
+    </assembly>
+    <members>
+        <member name="T:MessageBus.Api.BackgroundServices.HealthMonitorService">
+            <summary>
+            Background service that runs periodic health checks every 30 seconds
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.BackgroundServices.MetricsCollectionService">
+            <summary>
+            Background service that collects queue depth and throughput metrics every minute
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.BackgroundServices.MetricsCollectionService.GetQueueMetrics(System.String,System.Int32)">
+            <summary>
+            Gets the recent metrics for a specific queue
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.BackgroundServices.MetricsCollectionService.GetThroughputMetrics(System.Int32)">
+            <summary>
+            Gets the recent throughput metrics
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.BackgroundServices.QueueMetricSnapshot">
+            <summary>
+            Snapshot of queue metrics at a point in time
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.BackgroundServices.ThroughputMetric">
+            <summary>
+            Throughput metric calculated between collection intervals
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Controllers.ConversationsController">
+            <summary>
+            API endpoints for conversation tracking and tracing
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.ConversationsController.GetConversations(System.String,System.String)">
+            <summary>
+            List conversations with optional filtering by state
+            </summary>
+            <param name="state">Filter by conversation state (e.g., CO, SO, ER)</param>
+            <param name="service">Filter by service name</param>
+            <returns>List of conversations</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.ConversationsController.GetStatistics">
+            <summary>
+            Get statistics about conversations
+            </summary>
+            <returns>Conversation statistics</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.ConversationsController.GetConversationDetail(System.Guid,System.Boolean,System.Boolean)">
+            <summary>
+            Get full conversation trace including timeline
+            </summary>
+            <param name="conversationHandle">Conversation handle GUID</param>
+            <param name="includeDeadLetterHistory">Include dead letter history</param>
+            <param name="includeTransmissionQueue">Include transmission queue info</param>
+            <returns>Conversation detail with trace</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.ConversationsController.GetConversationTrace(System.Guid)">
+            <summary>
+            Get conversation trace items
+            </summary>
+            <param name="conversationHandle">Conversation handle GUID</param>
+            <returns>List of trace items</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.ConversationsController.GetConversationTimeline(System.Guid)">
+            <summary>
+            Get conversation timeline for visualization
+            </summary>
+            <param name="conversationHandle">Conversation handle GUID</param>
+            <returns>Timeline data structure</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.ConversationsController.ExportConversation(System.Guid,System.String)">
+            <summary>
+            Export conversation in specified format
+            </summary>
+            <param name="conversationHandle">Conversation handle GUID</param>
+            <param name="format">Export format: json or csv</param>
+            <returns>Exported data file</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.ConversationsController.EndConversation(System.Guid,System.Boolean)">
+            <summary>
+            End a conversation
+            </summary>
+            <param name="conversationHandle">Conversation handle GUID</param>
+            <param name="withCleanup">Perform cleanup of related data</param>
+            <returns>Operation result</returns>
+        </member>
+        <member name="T:MessageBus.Api.Controllers.ConversationListResponse">
+            <summary>
+            Response containing conversations with statistics
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Controllers.DiagnosticsController">
+            <summary>
+            API endpoints for diagnostics, health checks, and performance metrics
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.DiagnosticsController.GetStatus">
+            <summary>
+            Get overall Service Broker health status
+            </summary>
+            <returns>System status overview</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.DiagnosticsController.GetBrokerStatus">
+            <summary>
+            Get Service Broker health information
+            </summary>
+            <returns>Broker health details</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.DiagnosticsController.GetTransmissionQueue(System.Int32,System.String)">
+            <summary>
+            View transmission queue items
+            </summary>
+            <param name="minStuckSeconds">Minimum seconds a message must be stuck to be included</param>
+            <param name="serviceNameFilter">Filter by service name</param>
+            <returns>Transmission queue items</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.DiagnosticsController.GetDialogErrors(System.Boolean,System.Int32,System.String)">
+            <summary>
+            View dialog errors
+            </summary>
+            <param name="includeAllErrorStates">Include all error states, not just critical</param>
+            <param name="minAgeSeconds">Minimum age in seconds for errors to include</param>
+            <param name="serviceNameFilter">Filter by service name</param>
+            <returns>List of dialog errors</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.DiagnosticsController.GetMetrics(System.String,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Get performance metrics
+            </summary>
+            <param name="queueName">Filter by queue name</param>
+            <param name="hoursBack">Number of hours to look back (default: 24)</param>
+            <param name="aggregationMinutes">Aggregation interval in minutes (0 = raw data)</param>
+            <param name="topN">Maximum number of metrics to return</param>
+            <returns>Performance metrics</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.DiagnosticsController.RunHealthCheck">
+            <summary>
+            Run a full diagnostic health check
+            </summary>
+            <returns>Comprehensive diagnostic results</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.DiagnosticsController.GetOrphanedConversations(System.Int32)">
+            <summary>
+            Check for orphaned conversations
+            </summary>
+            <param name="thresholdHours">Threshold in hours to consider a conversation orphaned</param>
+            <returns>List of orphaned conversations</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.DiagnosticsController.ValidateServices">
+            <summary>
+            Validate that all services have valid queues
+            </summary>
+            <returns>Service validation results</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.DiagnosticsController.GetDiagnosticsSummary">
+            <summary>
+            Get a full diagnostic summary for reporting
+            </summary>
+            <returns>Complete diagnostic summary</returns>
+        </member>
+        <member name="T:MessageBus.Api.Controllers.TransmissionQueueResponse">
+            <summary>
+            Response containing transmission queue data
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Controllers.DialogErrorsResponse">
+            <summary>
+            Response containing dialog errors
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Controllers.MetricsResponse">
+            <summary>
+            Response containing performance metrics
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Controllers.ServiceValidationResponse">
+            <summary>
+            Response containing service validation results
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Controllers.HealthController">
+            <summary>
+            Health check API endpoints
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.HealthController.GetHealthCheck">
+            <summary>
+            Run comprehensive health check on Service Broker infrastructure
+            </summary>
+            <returns>Health check result with broker status, queue health, and overall summary</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.HealthController.Ping">
+            <summary>
+            Simple ping endpoint to verify API is running
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Controllers.MessagesController">
+            <summary>
+            API endpoints for message operations
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.MessagesController.GetMessageDetails(System.Guid,System.String)">
+            <summary>
+            Get details of a specific message by conversation handle
+            </summary>
+            <param name="conversationHandle">The conversation handle GUID</param>
+            <param name="queueName">Optional queue name to search in</param>
+            <returns>Message details if found</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.MessagesController.SendMessage(MessageBus.Api.Services.Interfaces.SendMessageRequest)">
+            <summary>
+            Send a message via Service Broker
+            </summary>
+            <param name="request">Message send request</param>
+            <returns>Send result with dialog handle</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.MessagesController.SendBulkMessages(MessageBus.Api.Controllers.BulkSendRequest)">
+            <summary>
+            Send multiple messages for testing purposes
+            </summary>
+            <param name="request">Bulk send request</param>
+            <returns>Bulk send result with success/failure counts</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.MessagesController.ValidateMessageType(System.String,System.String)">
+            <summary>
+            Validate that a message type exists for a contract
+            </summary>
+            <param name="contractName">Contract name</param>
+            <param name="messageTypeName">Message type name</param>
+            <returns>Validation result</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.MessagesController.ValidateService(System.String)">
+            <summary>
+            Validate that a service exists
+            </summary>
+            <param name="serviceName">Service name</param>
+            <returns>Validation result</returns>
+        </member>
+        <member name="T:MessageBus.Api.Controllers.BulkSendRequest">
+            <summary>
+            Request for bulk message sending
+            </summary>
+        </member>
+        <member name="P:MessageBus.Api.Controllers.BulkSendRequest.Message">
+            <summary>
+            The message template to send
+            </summary>
+        </member>
+        <member name="P:MessageBus.Api.Controllers.BulkSendRequest.Count">
+            <summary>
+            Number of messages to send (1-1000)
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Controllers.PoisonMessagesController">
+            <summary>
+            API endpoints for poison message and dead-letter queue management
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.PoisonMessagesController.GetPoisonMessages">
+            <summary>
+            List all poison messages
+            </summary>
+            <returns>List of poison messages</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.PoisonMessagesController.GetDeadLetteredMessages(System.Boolean)">
+            <summary>
+            List dead-lettered messages
+            </summary>
+            <param name="includeResolved">Include resolved dead letter messages</param>
+            <returns>List of dead-lettered messages</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.PoisonMessagesController.GetStatistics">
+            <summary>
+            Get poison message statistics
+            </summary>
+            <returns>Statistics about poison messages</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.PoisonMessagesController.RetryPoisonMessage(System.Int64)">
+            <summary>
+            Retry a poison message
+            </summary>
+            <param name="id">Poison message ID</param>
+            <returns>Operation result</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.PoisonMessagesController.PurgePoisonMessage(System.Int64,MessageBus.Api.Controllers.PurgeRequest)">
+            <summary>
+            Purge a poison message to dead-letter queue
+            </summary>
+            <param name="id">Poison message ID</param>
+            <param name="request">Purge request with reason</param>
+            <returns>Operation result</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.PoisonMessagesController.BulkRetry(MessageBus.Api.Controllers.BulkRetryRequest)">
+            <summary>
+            Bulk retry multiple poison messages
+            </summary>
+            <param name="request">Bulk retry request with IDs</param>
+            <returns>Bulk operation result</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.PoisonMessagesController.BulkPurge(MessageBus.Api.Controllers.BulkPurgeRequest)">
+            <summary>
+            Bulk purge multiple poison messages to dead-letter queue
+            </summary>
+            <param name="request">Bulk purge request with IDs and reason</param>
+            <returns>Bulk operation result</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.PoisonMessagesController.ResolveDeadLetter(System.Int64,MessageBus.Api.Controllers.ResolveRequest)">
+            <summary>
+            Resolve a dead-letter message (mark as handled)
+            </summary>
+            <param name="id">Dead-letter message ID</param>
+            <param name="request">Resolution request with notes</param>
+            <returns>Operation result</returns>
+        </member>
+        <member name="T:MessageBus.Api.Controllers.PoisonMessageListResponse">
+            <summary>
+            Response containing poison messages with statistics
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Controllers.PurgeRequest">
+            <summary>
+            Request for purging a poison message
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Controllers.BulkRetryRequest">
+            <summary>
+            Request for bulk retry operation
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Controllers.BulkPurgeRequest">
+            <summary>
+            Request for bulk purge operation
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Controllers.ResolveRequest">
+            <summary>
+            Request for resolving a dead-letter message
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Controllers.QueuesController">
+            <summary>
+            API endpoints for queue management operations
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.QueuesController.GetQueues(System.Boolean,System.Boolean)">
+            <summary>
+            List all queues with statistics
+            </summary>
+            <param name="includeSystemQueues">Include system queues (default: false)</param>
+            <param name="includeEmptyQueues">Include queues with no messages (default: true)</param>
+            <returns>List of queues with statistics</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.QueuesController.GetQueueDetails(System.String)">
+            <summary>
+            Get detailed statistics for a specific queue
+            </summary>
+            <param name="queueName">Name of the queue</param>
+            <returns>Queue statistics including message counts, ages, and health status</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.QueuesController.GetQueueHealth(System.String)">
+            <summary>
+            Get the health status for a specific queue
+            </summary>
+            <param name="queueName">Name of the queue</param>
+            <returns>Queue health status with issues if any</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.QueuesController.GetMessages(System.String,System.Int32,System.Int32,System.String,System.String)">
+            <summary>
+            Get messages from a queue (non-destructive peek)
+            </summary>
+            <param name="queueName">Name of the queue</param>
+            <param name="pageNumber">Page number (default: 1)</param>
+            <param name="pageSize">Number of messages per page (default: 25, max: 100)</param>
+            <param name="statusFilter">Filter by message status</param>
+            <param name="messageTypeFilter">Filter by message type</param>
+            <returns>Paginated list of messages</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.QueuesController.PauseQueue(System.String)">
+            <summary>
+            Pause a queue (disable receive)
+            </summary>
+            <param name="queueName">Name of the queue to pause</param>
+            <returns>Operation result</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.QueuesController.ResumeQueue(System.String)">
+            <summary>
+            Resume a paused queue (enable receive)
+            </summary>
+            <param name="queueName">Name of the queue to resume</param>
+            <returns>Operation result</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.QueuesController.PurgeQueue(System.String,System.Boolean)">
+            <summary>
+            Purge all messages from a queue
+            </summary>
+            <param name="queueName">Name of the queue to purge</param>
+            <param name="confirm">Confirmation flag (must be true to execute)</param>
+            <returns>Operation result</returns>
+        </member>
+        <member name="T:MessageBus.Api.Controllers.MessageListResponse">
+            <summary>
+            Response wrapper for paginated message list
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Controllers.ServicesController">
+            <summary>
+            API endpoints for Service Broker service metadata
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.ServicesController.GetServices">
+            <summary>
+            List all Service Broker services
+            </summary>
+            <returns>List of services</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.ServicesController.GetServiceDetails(System.String)">
+            <summary>
+            Get details for a specific service including associated queues
+            </summary>
+            <param name="serviceName">Name of the service</param>
+            <returns>Service details with queue information</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.ServicesController.GetContractsForService(System.String)">
+            <summary>
+            Get contracts associated with a service
+            </summary>
+            <param name="serviceName">Name of the service</param>
+            <returns>List of contracts</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.ServicesController.GetMessageTypes">
+            <summary>
+            List all message types defined in the database
+            </summary>
+            <returns>List of message types</returns>
+        </member>
+        <member name="M:MessageBus.Api.Controllers.ServicesController.GetServicesSummary">
+            <summary>
+            Get a summary of all services with their queues and message counts
+            </summary>
+            <returns>Service summary list</returns>
+        </member>
+        <member name="T:MessageBus.Api.Controllers.ServiceDetailResponse">
+            <summary>
+            Detailed service response including queue info
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Controllers.ServiceSummary">
+            <summary>
+            Summary of a service with queue status
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Data.MessageBusDbContext">
+            <summary>
+            DbContext for Service Broker Message Bus database operations.
+            Uses keyless entities for stored procedure result sets.
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Hubs.MessageBusHub">
+            <summary>
+            SignalR hub for real-time message bus updates
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Hubs.MessageBusHub.SubscribeToQueue(System.String)">
+            <summary>
+            Subscribe to a specific queue's updates
+            </summary>
+            <param name="queueName">Name of the queue to subscribe to</param>
+        </member>
+        <member name="M:MessageBus.Api.Hubs.MessageBusHub.UnsubscribeFromQueue(System.String)">
+            <summary>
+            Unsubscribe from a specific queue's updates
+            </summary>
+            <param name="queueName">Name of the queue to unsubscribe from</param>
+        </member>
+        <member name="M:MessageBus.Api.Hubs.MessageBusHub.SubscribeToDashboard">
+            <summary>
+            Subscribe to dashboard updates (health, metrics, alerts)
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Hubs.MessageBusHub.UnsubscribeFromDashboard">
+            <summary>
+            Unsubscribe from dashboard updates
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Hubs.MessageBusHub.SubscribeToAlerts">
+            <summary>
+            Subscribe to alert notifications
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Hubs.MessageBusHub.UnsubscribeFromAlerts">
+            <summary>
+            Unsubscribe from alert notifications
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Hubs.MessageBusHub.SubscribeToConversation(System.Guid)">
+            <summary>
+            Subscribe to conversation updates
+            </summary>
+            <param name="conversationHandle">The conversation handle to subscribe to</param>
+        </member>
+        <member name="M:MessageBus.Api.Hubs.MessageBusHub.UnsubscribeFromConversation(System.Guid)">
+            <summary>
+            Unsubscribe from conversation updates
+            </summary>
+            <param name="conversationHandle">The conversation handle to unsubscribe from</param>
+        </member>
+        <member name="M:MessageBus.Api.Hubs.MessageBusHub.Ping">
+            <summary>
+            Get current connection status
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Hubs.MessageBusHubExtensions">
+            <summary>
+            Extension methods for sending SignalR messages from services
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Hubs.MessageBusHubExtensions.SendQueueUpdated(Microsoft.AspNetCore.SignalR.IHubContext{MessageBus.Api.Hubs.MessageBusHub},System.String,MessageBus.Api.Models.QueueStatistics)">
+            <summary>
+            Send queue statistics update to subscribed clients
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Hubs.MessageBusHubExtensions.SendAlertTriggered(Microsoft.AspNetCore.SignalR.IHubContext{MessageBus.Api.Hubs.MessageBusHub},MessageBus.Api.Services.Interfaces.ActiveAlert)">
+            <summary>
+            Send alert triggered notification to subscribed clients
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Hubs.MessageBusHubExtensions.SendHealthUpdate(Microsoft.AspNetCore.SignalR.IHubContext{MessageBus.Api.Hubs.MessageBusHub},MessageBus.Api.Services.Interfaces.SystemStatus)">
+            <summary>
+            Send health update to dashboard subscribers
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Hubs.MessageBusHubExtensions.SendMetricsUpdate(Microsoft.AspNetCore.SignalR.IHubContext{MessageBus.Api.Hubs.MessageBusHub},System.Collections.Generic.List{MessageBus.Api.Models.PerformanceMetric})">
+            <summary>
+            Send metrics update to dashboard subscribers
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Hubs.MessageBusHubExtensions.SendConversationUpdated(Microsoft.AspNetCore.SignalR.IHubContext{MessageBus.Api.Hubs.MessageBusHub},System.Guid,MessageBus.Api.Services.Interfaces.ConversationDetail)">
+            <summary>
+            Send conversation update to subscribed clients
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Hubs.MessageBusHubExtensions.SendPoisonMessageAlert(Microsoft.AspNetCore.SignalR.IHubContext{MessageBus.Api.Hubs.MessageBusHub},MessageBus.Api.Models.PoisonMessageInfo)">
+            <summary>
+            Send poison message alert to dashboard
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Hubs.MessageBusHubExtensions.BroadcastNotification(Microsoft.AspNetCore.SignalR.IHubContext{MessageBus.Api.Hubs.MessageBusHub},System.String,System.String,System.Object)">
+            <summary>
+            Broadcast a general notification to all connected clients
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Middleware.ApiKeyAuthMiddleware">
+            <summary>
+            Middleware for API key authentication
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Middleware.ApiKeyConfig">
+            <summary>
+            Configuration for an API key
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Middleware.ApiKeyAuthMiddlewareExtensions">
+            <summary>
+            Extension methods for API key middleware
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Models.BrokerStatus">
+            <summary>
+            Represents Service Broker database status from usp_RunHealthCheck
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Models.ContractInfo">
+            <summary>
+            Represents contract information for a service
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Models.ConversationInfo">
+            <summary>
+            Represents active conversation information from vw_ActiveConversations view
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Models.ConversationTraceItem">
+            <summary>
+            Represents a conversation trace item from usp_GetConversationTrace stored procedure
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Models.DeadLetterMessage">
+            <summary>
+            Represents a message from the DeadLetterQueue table
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Models.DialogError">
+            <summary>
+            Represents dialog error information from usp_GetDialogErrors stored procedure
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Models.HealthCheckResult">
+            <summary>
+            Represents the overall health check result from usp_RunHealthCheck stored procedure
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Models.MessageInfo">
+            <summary>
+            Represents message information from usp_PeekMessages stored procedure
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Models.MessageTypeInfo">
+            <summary>
+            Represents message type information from sys.service_message_types query
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Models.PerformanceMetric">
+            <summary>
+            Represents performance metrics from usp_GetPerformanceMetrics stored procedure
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Models.PoisonMessageInfo">
+            <summary>
+            Represents poison message information from vw_PoisonMessages view
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Models.QueueInfo">
+            <summary>
+            Represents queue information from usp_GetAllQueuesWithStats stored procedure
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Models.QueueStatistics">
+            <summary>
+            Represents detailed queue statistics from usp_GetQueueStatistics stored procedure
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Models.ReceiveMessageResult">
+            <summary>
+            Represents the result of usp_ReceiveMessage stored procedure
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Models.SendMessageResult">
+            <summary>
+            Represents the result of usp_SendMessage stored procedure
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Models.ServiceBrokerHealthInfo">
+            <summary>
+            Represents Service Broker health information from vw_ServiceBrokerHealth view
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Models.ServiceInfo">
+            <summary>
+            Represents service information from sys.services query
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Models.TransmissionQueueItem">
+            <summary>
+            Represents transmission queue item from usp_GetTransmissionQueueStatus stored procedure
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Models.TransmissionQueueSummary">
+            <summary>
+            Represents transmission queue summary from usp_GetTransmissionQueueStatus
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Repositories.ConversationRepository">
+            <summary>
+            Repository implementation for conversation-related operations
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Repositories.DiagnosticsRepository">
+            <summary>
+            Repository implementation for diagnostics and health check operations
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Repositories.HealthRepository">
+            <summary>
+            Repository for health check database operations calling usp_RunHealthCheck
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Repositories.Interfaces.IConversationRepository">
+            <summary>
+            Repository interface for conversation-related operations
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Repositories.Interfaces.IConversationRepository.GetConversationsAsync(System.String,System.String)">
+            <summary>
+            Gets active conversations with optional filtering
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Repositories.Interfaces.IConversationRepository.GetConversationTraceAsync(System.Guid,System.Boolean,System.Boolean)">
+            <summary>
+            Gets the conversation trace/history for a specific conversation
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Repositories.Interfaces.IConversationRepository.EndConversationAsync(System.Guid,System.Boolean)">
+            <summary>
+            Ends a conversation
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Repositories.Interfaces.IDiagnosticsRepository">
+            <summary>
+            Repository interface for diagnostics and health check operations
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Repositories.Interfaces.IDiagnosticsRepository.GetBrokerStatusAsync">
+            <summary>
+            Gets the overall Service Broker health status
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Repositories.Interfaces.IDiagnosticsRepository.GetTransmissionQueueAsync(System.Int32,System.String)">
+            <summary>
+            Gets the transmission queue status with optional filtering
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Repositories.Interfaces.IDiagnosticsRepository.GetTransmissionQueueSummaryAsync">
+            <summary>
+            Gets the transmission queue summary
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Repositories.Interfaces.IDiagnosticsRepository.GetDialogErrorsAsync(System.Boolean,System.Int32,System.String)">
+            <summary>
+            Gets dialog errors with optional filtering
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Repositories.Interfaces.IDiagnosticsRepository.GetPerformanceMetricsAsync(System.String,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Gets performance metrics with optional filtering and aggregation
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Repositories.Interfaces.IDiagnosticsRepository.RunHealthCheckAsync(System.Int32,System.Int32)">
+            <summary>
+            Runs a comprehensive health check
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Repositories.Interfaces.IHealthRepository">
+            <summary>
+            Repository interface for health check database operations
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Repositories.Interfaces.IMessageRepository">
+            <summary>
+            Repository interface for message-related operations
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Repositories.Interfaces.IMessageRepository.GetMessagesAsync(System.String,System.Int32,System.Int32,System.String,System.String)">
+            <summary>
+            Peeks at messages in a queue without removing them
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Repositories.Interfaces.IMessageRepository.SendMessageAsync(System.String,System.String,System.String,System.String,System.String,System.Int32,System.Nullable{System.Guid},System.Nullable{System.Guid},System.Int32,System.Boolean,System.String)">
+            <summary>
+            Sends a message through Service Broker
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Repositories.Interfaces.IMessageRepository.ReceiveMessageAsync(System.String,System.Int32,System.String)">
+            <summary>
+            Receives a single message from a queue
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Repositories.Interfaces.IPoisonMessageRepository">
+            <summary>
+            Repository interface for poison message and dead letter queue operations
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Repositories.Interfaces.IPoisonMessageRepository.GetPoisonMessagesAsync">
+            <summary>
+            Gets all poison messages from the view
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Repositories.Interfaces.IPoisonMessageRepository.GetDeadLetteredMessagesAsync(System.Boolean)">
+            <summary>
+            Gets all messages in the dead letter queue
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Repositories.Interfaces.IPoisonMessageRepository.RetryPoisonMessageAsync(System.Int64)">
+            <summary>
+            Retries a poison message by its ID
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Repositories.Interfaces.IPoisonMessageRepository.MoveToDeadLetterAsync(System.Guid,System.String,System.String)">
+            <summary>
+            Moves a message to the dead letter queue
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Repositories.Interfaces.IPoisonMessageRepository.ResolveDeadLetterMessageAsync(System.Int64,System.String,System.String)">
+            <summary>
+            Marks a dead letter message as resolved
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Repositories.Interfaces.IQueueRepository">
+            <summary>
+            Repository interface for queue-related operations
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Repositories.Interfaces.IQueueRepository.GetAllQueuesAsync(System.Boolean,System.Boolean)">
+            <summary>
+            Gets all queues with their statistics
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Repositories.Interfaces.IQueueRepository.GetQueueStatisticsAsync(System.String)">
+            <summary>
+            Gets detailed statistics for a specific queue
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Repositories.Interfaces.IQueueRepository.PauseQueueAsync(System.String)">
+            <summary>
+            Pauses (disables receive on) a queue
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Repositories.Interfaces.IQueueRepository.ResumeQueueAsync(System.String)">
+            <summary>
+            Resumes (enables receive on) a queue
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Repositories.Interfaces.IQueueRepository.PurgeQueueAsync(System.String)">
+            <summary>
+            Purges all messages from a queue
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Repositories.Interfaces.IServiceRepository">
+            <summary>
+            Repository interface for Service Broker service-related operations
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Repositories.Interfaces.IServiceRepository.GetAllServicesAsync">
+            <summary>
+            Gets all services defined in the database
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Repositories.Interfaces.IServiceRepository.GetContractsForServiceAsync(System.String)">
+            <summary>
+            Gets contracts associated with a specific service
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Repositories.Interfaces.IServiceRepository.GetMessageTypesAsync">
+            <summary>
+            Gets all message types defined in the database
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Repositories.MessageRepository">
+            <summary>
+            Repository implementation for message-related operations
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Repositories.PoisonMessageRepository">
+            <summary>
+            Repository implementation for poison message and dead letter queue operations
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Repositories.QueueRepository">
+            <summary>
+            Repository implementation for queue-related operations
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Repositories.ServiceRepository">
+            <summary>
+            Repository implementation for Service Broker service-related operations
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.AlertService">
+            <summary>
+            Service implementation for alert management and notifications
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.ConversationService">
+            <summary>
+            Service implementation for conversation-related business operations
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.DiagnosticsService">
+            <summary>
+            Service implementation for diagnostics and system health operations
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.HealthService">
+            <summary>
+            Service for health check operations
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.IAlertService">
+            <summary>
+            Service interface for alert management and notifications
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IAlertService.GetAlertRulesAsync">
+            <summary>
+            Gets all configured alert rules
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IAlertService.GetActiveAlertsAsync">
+            <summary>
+            Gets active alerts
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IAlertService.EvaluateAlertsAsync">
+            <summary>
+            Evaluates all alert rules against current metrics
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IAlertService.CreateAlertRuleAsync(MessageBus.Api.Services.Interfaces.CreateAlertRuleRequest)">
+            <summary>
+            Creates a new alert rule
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IAlertService.UpdateAlertRuleAsync(System.Int32,MessageBus.Api.Services.Interfaces.UpdateAlertRuleRequest)">
+            <summary>
+            Updates an existing alert rule
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IAlertService.DeleteAlertRuleAsync(System.Int32)">
+            <summary>
+            Deletes an alert rule
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IAlertService.SetAlertRuleEnabledAsync(System.Int32,System.Boolean)">
+            <summary>
+            Enables or disables an alert rule
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IAlertService.AcknowledgeAlertAsync(System.Int32,System.String,System.String)">
+            <summary>
+            Acknowledges an active alert
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IAlertService.TriggerNotificationAsync(MessageBus.Api.Services.Interfaces.ActiveAlert)">
+            <summary>
+            Triggers a notification (placeholder for email/webhook/Slack)
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IAlertService.GetAlertHistoryAsync(System.Int32)">
+            <summary>
+            Gets alert history
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.AlertRule">
+            <summary>
+            Represents an alert rule configuration
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.AlertMetricType">
+            <summary>
+            Types of metrics that can be monitored
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.AlertCondition">
+            <summary>
+            Alert condition types
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.AlertSeverity">
+            <summary>
+            Alert severity levels
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.NotificationChannelType">
+            <summary>
+            Notification channel types
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.NotificationChannel">
+            <summary>
+            Notification channel configuration
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.ActiveAlert">
+            <summary>
+            Represents an active (triggered) alert
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.AlertEvaluation">
+            <summary>
+            Result of alert rule evaluation
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.CreateAlertRuleRequest">
+            <summary>
+            Request to create a new alert rule
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.UpdateAlertRuleRequest">
+            <summary>
+            Request to update an alert rule
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.AlertHistoryItem">
+            <summary>
+            Alert history item
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.IConversationService">
+            <summary>
+            Service interface for conversation-related business operations
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IConversationService.GetConversationsAsync(System.String,System.String)">
+            <summary>
+            Gets active conversations with optional filtering
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IConversationService.GetConversationDetailAsync(System.Guid,System.Boolean,System.Boolean)">
+            <summary>
+            Gets a conversation with its full trace
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IConversationService.GetConversationTraceAsync(System.Guid)">
+            <summary>
+            Gets the conversation trace items
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IConversationService.BuildTimelineAsync(System.Guid)">
+            <summary>
+            Builds a timeline data structure for visualization
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IConversationService.ExportAsJsonAsync(System.Guid)">
+            <summary>
+            Exports a conversation as JSON
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IConversationService.ExportAsCsvAsync(System.Guid)">
+            <summary>
+            Exports a conversation as CSV
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IConversationService.EndConversationAsync(System.Guid,System.Boolean)">
+            <summary>
+            Ends a conversation
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IConversationService.GetConversationStatsAsync">
+            <summary>
+            Gets conversation statistics
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.ConversationDetail">
+            <summary>
+            Detailed conversation information including trace
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.ConversationTimeline">
+            <summary>
+            Timeline representation of a conversation for visualization
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.TimelineEvent">
+            <summary>
+            Represents an event in the conversation timeline
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.TimelineParticipant">
+            <summary>
+            Represents a participant in a conversation
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.ConversationStats">
+            <summary>
+            Statistics about conversations
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.IDiagnosticsService">
+            <summary>
+            Service interface for diagnostics and system health operations
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IDiagnosticsService.RunHealthChecksAsync">
+            <summary>
+            Runs comprehensive health checks
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IDiagnosticsService.GetSystemStatusAsync">
+            <summary>
+            Gets the overall system status
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IDiagnosticsService.GetBrokerStatusAsync">
+            <summary>
+            Gets the Service Broker health information
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IDiagnosticsService.GetTransmissionQueueAsync(System.Int32,System.String)">
+            <summary>
+            Gets the transmission queue status
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IDiagnosticsService.GetTransmissionQueueSummaryAsync">
+            <summary>
+            Gets the transmission queue summary
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IDiagnosticsService.GetDialogErrorsAsync(System.Boolean,System.Int32,System.String)">
+            <summary>
+            Gets dialog errors
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IDiagnosticsService.GetPerformanceMetricsAsync(System.String,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Gets performance metrics
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IDiagnosticsService.CheckForOrphanedConversationsAsync(System.Int32)">
+            <summary>
+            Checks for orphaned conversations
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IDiagnosticsService.ValidateServicesHaveValidQueuesAsync">
+            <summary>
+            Validates that all services have valid queues
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IDiagnosticsService.GetDiagnosticsSummaryAsync">
+            <summary>
+            Gets a diagnostic summary for export/reporting
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.DiagnosticsResult">
+            <summary>
+            Comprehensive diagnostics result
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.DiagnosticCheck">
+            <summary>
+            Individual diagnostic check result
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.SystemStatus">
+            <summary>
+            Overall system status
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.BrokerSystemStatus">
+            <summary>
+            Broker system status
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.QueueSystemStatus">
+            <summary>
+            Queue system status
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.ConversationSystemStatus">
+            <summary>
+            Conversation system status
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.TransmissionSystemStatus">
+            <summary>
+            Transmission queue system status
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.OrphanedConversation">
+            <summary>
+            Represents an orphaned conversation
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.ServiceValidationResult">
+            <summary>
+            Result of service validation
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.DiagnosticsSummary">
+            <summary>
+            Summary for diagnostics export/reporting
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.IHealthService">
+            <summary>
+            Service interface for health check operations
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.IMessageService">
+            <summary>
+            Service interface for message-related business operations
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IMessageService.GetMessagesAsync(System.String,System.Int32,System.Int32,System.String,System.String)">
+            <summary>
+            Gets messages from a queue with optional filtering
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IMessageService.SendMessageAsync(MessageBus.Api.Services.Interfaces.SendMessageRequest)">
+            <summary>
+            Sends a message with validation
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IMessageService.BulkSendAsync(MessageBus.Api.Services.Interfaces.SendMessageRequest,System.Int32)">
+            <summary>
+            Sends multiple copies of a message for testing purposes
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IMessageService.ValidateMessageTypeAsync(System.String,System.String)">
+            <summary>
+            Validates that a message type exists in a contract
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IMessageService.ValidateServiceAsync(System.String)">
+            <summary>
+            Validates that a target service exists
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IMessageService.ReceiveMessageAsync(System.String,System.Int32,System.String)">
+            <summary>
+            Receives a message from a queue
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.SendMessageRequest">
+            <summary>
+            Request object for sending a message
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.BulkSendResult">
+            <summary>
+            Result of a bulk send operation
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.IPoisonMessageService">
+            <summary>
+            Service interface for poison message and dead letter queue operations
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IPoisonMessageService.GetPoisonMessagesAsync">
+            <summary>
+            Gets all poison messages
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IPoisonMessageService.GetDeadLetteredMessagesAsync(System.Boolean)">
+            <summary>
+            Gets all dead lettered messages
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IPoisonMessageService.RetryPoisonMessageAsync(System.Int64)">
+            <summary>
+            Retries a poison message (re-enables queue, moves message back)
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IPoisonMessageService.BulkRetryPoisonMessagesAsync(System.Collections.Generic.IEnumerable{System.Int64})">
+            <summary>
+            Retries multiple poison messages
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IPoisonMessageService.MoveToDeadLetterAsync(System.Guid,System.String,System.String)">
+            <summary>
+            Moves a message to the dead letter queue
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IPoisonMessageService.PurgePoisonMessageAsync(System.Int64,System.String)">
+            <summary>
+            Purges a poison message to dead letter
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IPoisonMessageService.BulkPurgePoisonMessagesAsync(System.Collections.Generic.IEnumerable{System.Int64},System.String)">
+            <summary>
+            Purges multiple poison messages to dead letter
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IPoisonMessageService.ResolveDeadLetterMessageAsync(System.Int64,System.String,System.String)">
+            <summary>
+            Resolves a dead letter message
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IPoisonMessageService.GetPoisonMessageStatsAsync">
+            <summary>
+            Gets poison message statistics
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.BulkOperationResult">
+            <summary>
+            Result of a bulk operation
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.BulkOperationItemResult">
+            <summary>
+            Result of a single item in a bulk operation
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.PoisonMessageStats">
+            <summary>
+            Statistics for poison messages
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.IQueueService">
+            <summary>
+            Service interface for queue-related business operations
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IQueueService.GetAllQueuesAsync(System.Boolean,System.Boolean)">
+            <summary>
+            Gets all queues with their statistics
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IQueueService.GetQueueStatisticsAsync(System.String)">
+            <summary>
+            Gets detailed statistics for a specific queue
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IQueueService.GetQueueHealthStatusAsync(System.String)">
+            <summary>
+            Gets the calculated health status for a queue
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IQueueService.PauseQueueAsync(System.String)">
+            <summary>
+            Pauses a queue with validation
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IQueueService.ResumeQueueAsync(System.String)">
+            <summary>
+            Resumes a queue with validation
+            </summary>
+        </member>
+        <member name="M:MessageBus.Api.Services.Interfaces.IQueueService.PurgeQueueAsync(System.String,System.Boolean)">
+            <summary>
+            Purges all messages from a queue with validation
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.QueueHealthStatus">
+            <summary>
+            Represents a queue's health status
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.HealthLevel">
+            <summary>
+            Health level enumeration
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.ServiceResult">
+            <summary>
+            Generic service operation result
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.Interfaces.ServiceResult`1">
+            <summary>
+            Generic service operation result with data
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.MessageService">
+            <summary>
+            Service implementation for message-related business operations
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.PoisonMessageService">
+            <summary>
+            Service implementation for poison message and dead letter queue operations
+            </summary>
+        </member>
+        <member name="T:MessageBus.Api.Services.QueueService">
+            <summary>
+            Service implementation for queue-related business operations
+            </summary>
+        </member>
+    </members>
+</doc>

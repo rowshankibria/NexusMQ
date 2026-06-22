@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(claude config get:*)",
+      "Bash(where:*)",
+      "Bash(dir:*)",
+      "Bash(cat:*)",
+      "Bash(cmd /c \"dir /b D:\\\\Workstations\\\\Developments\\\\Con-Edison\\\\Applications\\\\MessageBus\\\\*.md 2>nul\")",
+      "Bash(dotnet new:*)",
+      "Bash(dotnet add:*)",
+      "Bash(dotnet add package:*)",
+      "Bash(dotnet build:*)",
+      "Bash(npx -y @angular/cli@latest new:*)",
+      "Bash(npx -y @angular/cli@18 new:*)",
+      "Bash(npm install:*)",
+      "Bash(npx ng build:*)",
+      "Bash(dotnet restore:*)",
+      "Bash(tree:*)"
+    ]
+  }
+}

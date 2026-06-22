@@ -1,0 +1,329 @@
+<div class="message-sender">
+  <div class="message-sender__header">
+    <h1 class="message-sender__title">Message Sender</h1>
+    <p class="message-sender__subtitle">Send test messages to Service Broker queues</p>
+  </div>
+
+  <div class="message-sender__loading" *ngIf="isLoading">
+    <app-loading-spinner size="large"></app-loading-spinner>
+    <p>Loading services and contracts...</p>
+  </div>
+
+  <div class="message-sender__content" *ngIf="!isLoading">
+    <form class="message-sender__form" (ngSubmit)="sendMessage()">
+      <div class="message-sender__main-grid">
+        <div class="message-sender__left-column">
+          <div class="message-sender__section">
+            <h3 class="message-sender__section-title">Message Routing</h3>
+
+            <div class="message-sender__field">
+              <label class="message-sender__label" for="initiatorService">
+                Initiator Service <span class="message-sender__required">*</span>
+              </label>
+              <select
+                id="initiatorService"
+                class="message-sender__select"
+                [class.message-sender__select--error]="hasFieldError('initiatorService')"
+                [ngModel]="state?.form?.initiatorService"
+                (ngModelChange)="onInitiatorServiceChange($event)"
+                name="initiatorService">
+                <option value="">Select initiator service...</option>
+                <option *ngFor="let service of services" [value]="service.serviceName">
+                  {{ service.displayName || service.serviceName }}
+                </option>
+              </select>
+              <span class="message-sender__error" *ngIf="hasFieldError('initiatorService')">
+                {{ getFieldError('initiatorService') }}
+              </span>
+            </div>
+
+            <div class="message-sender__field">
+              <label class="message-sender__label" for="targetService">
+                Target Service <span class="message-sender__required">*</span>
+              </label>
+              <select
+                id="targetService"
+                class="message-sender__select"
+                [class.message-sender__select--error]="hasFieldError('targetService')"
+                [ngModel]="state?.form?.targetService"
+                (ngModelChange)="onTargetServiceChange($event)"
+                name="targetService">
+                <option value="">Select target service...</option>
+                <option *ngFor="let service of services" [value]="service.serviceName">
+                  {{ service.displayName || service.serviceName }}
+                </option>
+              </select>
+              <span class="message-sender__error" *ngIf="hasFieldError('targetService')">
+                {{ getFieldError('targetService') }}
+              </span>
+            </div>
+
+            <div class="message-sender__field">
+              <label class="message-sender__label" for="contract">
+                Contract <span class="message-sender__required">*</span>
+              </label>
+              <select
+                id="contract"
+                class="message-sender__select"
+                [class.message-sender__select--error]="hasFieldError('contractName')"
+                [ngModel]="state?.form?.contractName"
+                (ngModelChange)="onContractChange($event)"
+                name="contractName"
+                [disabled]="filteredContracts.length === 0">
+                <option value="">Select contract...</option>
+                <option *ngFor="let contract of filteredContracts" [value]="contract.contractName">
+                  {{ contract.displayName || contract.contractName }}
+                </option>
+              </select>
+              <span class="message-sender__error" *ngIf="hasFieldError('contractName')">
+                {{ getFieldError('contractName') }}
+              </span>
+            </div>
+
+            <div class="message-sender__field">
+              <label class="message-sender__label" for="messageType">
+                Message Type <span class="message-sender__required">*</span>
+              </label>
+              <select
+                id="messageType"
+                class="message-sender__select"
+                [class.message-sender__select--error]="hasFieldError('messageTypeName')"
+                [ngModel]="state?.form?.messageTypeName"
+                (ngModelChange)="onMessageTypeChange($event)"
+                name="messageTypeName"
+                [disabled]="filteredMessageTypes.length === 0">
+                <option value="">Select message type...</option>
+                <option *ngFor="let type of filteredMessageTypes" [value]="type.messageTypeName">
+                  {{ type.displayName || type.messageTypeName }}
+                </option>
+              </select>
+              <span class="message-sender__error" *ngIf="hasFieldError('messageTypeName')">
+                {{ getFieldError('messageTypeName') }}
+              </span>
+            </div>
+          </div>
+
+          <div class="message-sender__section">
+            <h3 class="message-sender__section-title">Priority</h3>
+            <div class="message-sender__priority-control">
+              <input
+                type="range"
+                id="priority"
+                class="message-sender__slider"
+                min="0"
+                max="10"
+                [ngModel]="state?.form?.priority"
+                (ngModelChange)="onPriorityChange($event)"
+                name="priority">
+              <div class="message-sender__priority-display">
+                <span
+                  class="message-sender__priority-value"
+                  [ngClass]="getPriorityClass(state?.form?.priority || 5)">
+                  {{ state?.form?.priority }}
+                </span>
+                <span class="message-sender__priority-label">
+                  {{ getPriorityLabel(state?.form?.priority || 5) }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="message-sender__section">
+            <button
+              type="button"
+              class="message-sender__advanced-toggle"
+              (click)="toggleAdvancedOptions()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" [class.rotated]="showAdvancedOptions">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+              Advanced Options
+            </button>
+
+            <div class="message-sender__advanced" *ngIf="showAdvancedOptions">
+              <div class="message-sender__field">
+                <label class="message-sender__label" for="dialogHandle">
+                  Dialog Handle
+                  <span class="message-sender__hint">(for existing conversations)</span>
+                </label>
+                <input
+                  type="text"
+                  id="dialogHandle"
+                  class="message-sender__input"
+                  [ngModel]="state?.form?.dialogHandle"
+                  (ngModelChange)="onDialogHandleChange($event)"
+                  name="dialogHandle"
+                  placeholder="Enter existing dialog handle...">
+              </div>
+
+              <div class="message-sender__field">
+                <label class="message-sender__label" for="conversationGroupId">
+                  Conversation Group ID
+                </label>
+                <input
+                  type="text"
+                  id="conversationGroupId"
+                  class="message-sender__input"
+                  [ngModel]="state?.form?.conversationGroupId"
+                  (ngModelChange)="onConversationGroupIdChange($event)"
+                  name="conversationGroupId"
+                  placeholder="Enter conversation group ID...">
+              </div>
+
+              <div class="message-sender__field">
+                <label class="message-sender__label" for="dialogLifetime">
+                  Dialog Lifetime (seconds)
+                </label>
+                <input
+                  type="number"
+                  id="dialogLifetime"
+                  class="message-sender__input"
+                  [ngModel]="state?.form?.dialogLifetime"
+                  (ngModelChange)="onDialogLifetimeChange($event)"
+                  name="dialogLifetime"
+                  placeholder="Default lifetime"
+                  min="0">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="message-sender__right-column">
+          <div class="message-sender__section message-sender__section--editor">
+            <h3 class="message-sender__section-title">Message Body</h3>
+            <app-message-body-editor
+              [content]="state?.form?.messageBody || ''"
+              [format]="state?.form?.bodyFormat || 'raw'"
+              [templates]="templates"
+              [error]="getFieldError('messageBody')"
+              [disabled]="isSending"
+              (contentChange)="onMessageBodyChange($event)"
+              (formatChange)="onBodyFormatChange($event)"
+              (templateSelected)="onTemplateSelected($event)">
+            </app-message-body-editor>
+
+            <div class="message-sender__size-warning" *ngIf="messageSizeWarning">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+              {{ messageSizeWarning }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="message-sender__actions">
+        <div class="message-sender__send-options">
+          <div class="message-sender__send-mode">
+            <button
+              type="button"
+              class="message-sender__mode-btn"
+              [class.message-sender__mode-btn--active]="state?.form?.sendMode === 'single'"
+              (click)="onSendModeChange('single')">
+              Single
+            </button>
+            <button
+              type="button"
+              class="message-sender__mode-btn"
+              [class.message-sender__mode-btn--active]="state?.form?.sendMode === 'bulk'"
+              (click)="onSendModeChange('bulk')">
+              Bulk
+            </button>
+          </div>
+
+          <div class="message-sender__bulk-options" *ngIf="state?.form?.sendMode === 'bulk'">
+            <label class="message-sender__label" for="bulkCount">Copies:</label>
+            <input
+              type="number"
+              id="bulkCount"
+              class="message-sender__input message-sender__input--small"
+              [ngModel]="state?.form?.bulkCopyCount"
+              (ngModelChange)="onBulkCopyCountChange($event)"
+              name="bulkCopyCount"
+              min="1"
+              max="1000">
+          </div>
+        </div>
+
+        <div class="message-sender__buttons">
+          <button
+            type="button"
+            class="message-sender__btn message-sender__btn--secondary"
+            (click)="togglePreview()"
+            [disabled]="isSending">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            Preview
+          </button>
+
+          <button
+            type="button"
+            class="message-sender__btn message-sender__btn--secondary"
+            (click)="resetForm()"
+            [disabled]="isSending">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="1 4 1 10 7 10"></polyline>
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+            </svg>
+            Reset
+          </button>
+
+          <button
+            type="submit"
+            class="message-sender__btn message-sender__btn--primary"
+            [disabled]="!isFormValid || isSending">
+            <svg *ngIf="!isSending" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+            <app-loading-spinner *ngIf="isSending" size="small"></app-loading-spinner>
+            {{ isSending ? 'Sending...' : (state?.form?.sendMode === 'bulk' ? 'Send ' + state?.form?.bulkCopyCount + ' Messages' : 'Send Message') }}
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <div class="message-sender__result" *ngIf="lastSendResult">
+      <div
+        class="message-sender__result-card"
+        [class.message-sender__result-card--success]="lastSendResult.success"
+        [class.message-sender__result-card--error]="!lastSendResult.success">
+        <div class="message-sender__result-header">
+          <svg *ngIf="lastSendResult.success" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+          <svg *ngIf="!lastSendResult.success" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="15" y1="9" x2="9" y2="15"></line>
+            <line x1="9" y1="9" x2="15" y2="15"></line>
+          </svg>
+          <h4>{{ lastSendResult.success ? 'Message Sent Successfully' : 'Failed to Send Message' }}</h4>
+        </div>
+        <div class="message-sender__result-body">
+          <p *ngIf="lastSendResult.message">{{ lastSendResult.message }}</p>
+          <p *ngIf="lastSendResult.conversationHandle">
+            <strong>Conversation Handle:</strong>
+            <code>{{ lastSendResult.conversationHandle }}</code>
+          </p>
+          <p *ngIf="lastSendResult.totalSent !== undefined">
+            <strong>Sent:</strong> {{ lastSendResult.totalSent }} |
+            <strong>Failed:</strong> {{ lastSendResult.totalFailed }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="message-sender__error-banner" *ngIf="error">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <span>{{ error }}</span>
+    </div>
+  </div>
+</div>

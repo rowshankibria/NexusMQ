@@ -1,0 +1,102 @@
+<div class="broker-status-panel">
+  <div class="panel-header">
+    <h2>Service Broker Status</h2>
+    <span class="last-checked" *ngIf="brokerStatus?.lastChecked">
+      Last checked: {{ brokerStatus.lastChecked | date:'medium' }}
+    </span>
+  </div>
+
+  <div class="empty-state" *ngIf="!brokerStatus && !loading">
+    <span class="empty-icon">🔌</span>
+    <p>No broker status available</p>
+  </div>
+
+  <ng-container *ngIf="brokerStatus">
+    <!-- Overall Health Indicator -->
+    <div class="health-indicator" [style.borderColor]="getHealthColor(brokerStatus.overallHealth)">
+      <div class="health-badge" [style.backgroundColor]="getHealthColor(brokerStatus.overallHealth)">
+        <span class="health-icon">{{ getHealthIcon(brokerStatus.overallHealth) }}</span>
+      </div>
+      <div class="health-info">
+        <span class="health-status">{{ getHealthLabel(brokerStatus.overallHealth) }}</span>
+        <span class="health-description">Overall Service Broker Health</span>
+      </div>
+      <div class="health-stats">
+        <div class="stat">
+          <span class="stat-value">{{ brokerStatus.databases.length }}</span>
+          <span class="stat-label">Databases</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">{{ brokerStatus.warnings.length }}</span>
+          <span class="stat-label">Warnings</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Database List -->
+    <div class="section">
+      <h3 class="section-title">Databases with Service Broker</h3>
+      <div class="database-list" *ngIf="brokerStatus.databases.length > 0; else noDatabases">
+        <div
+          class="database-card"
+          *ngFor="let db of brokerStatus.databases; trackBy: trackByDatabase"
+          [class.disabled]="!db.isEnabled">
+          <div class="database-header">
+            <span class="database-icon">{{ getDatabaseIcon(db) }}</span>
+            <span class="database-name">{{ db.databaseName }}</span>
+            <span class="database-status" [class.enabled]="db.isEnabled" [class.disabled]="!db.isEnabled">
+              {{ db.isEnabled ? 'Enabled' : 'Disabled' }}
+            </span>
+          </div>
+          <div class="database-details">
+            <div class="detail">
+              <span class="detail-label">Broker GUID</span>
+              <span class="detail-value monospace">{{ db.brokerGuid || 'N/A' }}</span>
+            </div>
+            <div class="detail-row">
+              <div class="detail">
+                <span class="detail-value">{{ db.serviceCount }}</span>
+                <span class="detail-label">Services</span>
+              </div>
+              <div class="detail">
+                <span class="detail-value">{{ db.queueCount }}</span>
+                <span class="detail-label">Queues</span>
+              </div>
+              <div class="detail">
+                <span class="detail-value">{{ db.activeConversations }}</span>
+                <span class="detail-label">Active Conversations</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <ng-template #noDatabases>
+        <div class="empty-section">
+          <p>No databases with Service Broker found</p>
+        </div>
+      </ng-template>
+    </div>
+
+    <!-- Configuration Warnings -->
+    <div class="section" *ngIf="brokerStatus.warnings.length > 0">
+      <h3 class="section-title">Configuration Warnings</h3>
+      <div class="warnings-list">
+        <div
+          class="warning-card"
+          *ngFor="let warning of brokerStatus.warnings; trackBy: trackByWarning"
+          [class.critical]="warning.level === 'Critical'"
+          [class.warning]="warning.level === 'Warning'">
+          <div class="warning-header">
+            <span class="warning-icon">{{ getWarningIcon(warning) }}</span>
+            <span class="warning-category">{{ warning.category }}</span>
+            <span class="warning-level">{{ warning.level }}</span>
+          </div>
+          <p class="warning-message">{{ warning.message }}</p>
+          <p class="warning-recommendation" *ngIf="warning.recommendation">
+            <strong>Recommendation:</strong> {{ warning.recommendation }}
+          </p>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>

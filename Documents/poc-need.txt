@@ -1,0 +1,134 @@
+
+
+DASHBOARD (HOME SCREEN)
+1.1 System health summary showing total services, active conversations, total queue depth, and overall system status (healthy, warning, critical).
+1.2 Queue health cards displayed in a grid view showing queue name, message count, status (active, idle, disabled, poison), oldest message age, and throughput in messages per minute.
+1.3 Message throughput graph with toggleable time ranges (1 hour, 6 hours, 24 hours) showing published rate versus consumed rate.
+1.4 Dead-letter queue summary showing poison message count, dead-lettered message count, and oldest message age.
+1.5 Service Broker status indicator showing whether the database has broker enabled and any configuration warnings.
+1.6 Real-time updates via WebSocket or polling at 2-5 second intervals.
+1.7 Configurable alerts for queue depth greater than 1000, message age greater than 5 minutes, any poison messages, and any disabled queues.
+
+
+QUEUE EXPLORER
+2.1 Left sidebar with searchable and filterable queue list showing status badges, message counts, and service associations, sortable by name, message count, or age.
+2.2 Queue detail panel showing queue configuration (service name, queue name, max readers, activation settings, retention policy, poison message handling).
+2.3 Queue statistics showing message count breakdown by status (Ready, Received, Sent), message age (oldest and average), throughput for the last hour, and last message received timestamp.
+2.4 Action buttons for sending messages, receiving messages, pausing queues, resuming queues, purging queues (with confirmation), and viewing poison messages.
+2.5 Message table with columns for sequence number, type, priority, status, size, age, and timestamp. Supports sorting, filtering, pagination (25, 50, or 100 rows), and bulk actions (delete, mark as received, export as JSON).
+
+
+MESSAGE INSPECTOR
+3.1 Message metadata panel showing conversation handle, conversation ID, message type, sequence number, priority, status, enqueue timestamp, and size.
+3.2 Message body viewer with auto-format detection (text, JSON, XML), syntax highlighting, raw binary view, copy button, and export to file.
+3.3 Conversation context panel showing initiator service, target service, dialog state (Start Outbound, Conversation Open, Closed, Error), dialog lifetime, and send/receive sequence numbers.
+3.4 Related messages navigation with previous and next buttons within a conversation, message count in conversation, and conversation state diagram.
+
+
+MESSAGE SENDER
+4.1 Form-based message composition with dropdowns for initiator service, target service, contract, and message type. Dropdowns auto-populate based on selections.
+4.2 Message body editor with syntax highlighting, format selector (raw binary, JSON, XML), inline validation for JSON and XML, character count, and template buttons for example payloads.
+4.3 Advanced options for priority (0-10 slider), dialog handle input for continuing existing conversations, conversation group ID, and dialog lifetime.
+4.4 Send options for single message send, bulk send for testing (send N copies), and preview button to review message before sending.
+4.5 Validation including required field highlighting, invalid JSON/XML error display, message size warnings, message type validation against contract, and target service existence check.
+
+
+POISON MESSAGE MANAGER
+5.1 Poison message list showing queue name, conversation handle, message type, error message, retry count, max retries, timestamps for when the message was moved to poison and last retry.
+5.2 Dead-letter queue view showing permanently failed messages with reason for dead-lettering and resolution notes.
+5.3 Message detail view with full message body, error trace from failed processing, retry history timeline, and current queue status.
+5.4 Action buttons for retrying a message (moves it back to the queue, re-enables the queue, and attempts reprocessing), purging a message (moves to dead-letter), re-enabling a disabled queue, and viewing the full message body.
+5.5 Bulk actions for selecting multiple poison messages and retrying or purging them together.
+
+
+CONVERSATION TRACE VIEWER
+6.1 Conversation list filterable by state (Active, Closed, Error) showing conversation handle, initiator and target services, current state, timestamps, and message count.
+6.2 Vertical timeline view of selected conversation with each message as a point on the timeline, state transitions shown (Initiated to Open to Closed or Error), hover preview, and click to open full message inspector.
+6.3 Message details for each step showing sent and received timestamps, processing duration, message type, priority, body preview, and status.
+6.4 State transition diagram showing visual flow with current state highlighted and potential next states.
+6.5 Export and share options to download conversation trace as JSON or CSV.
+
+
+DIAGNOSTICS AND MONITORING
+7.1 Service Broker status panel showing overall health (Healthy, Warning, Critical), databases with broker enabled, and configuration warnings for queues with too many readers, conversations in error state, messages stuck in transmission queue, and dead-letter queue growing too fast.
+7.2 Transmission queue view for remote services showing stuck messages, target service name, transmission status, time stuck, error description, retry count, and actions to force delivery, delete, or view message.
+7.3 Dialog endpoint errors showing conversations in error state, service names, error descriptions, time since error, and actions to end conversation, delete, or view details.
+7.4 Performance metrics dashboard showing message rate (messages per second over the last hour), queue depth trend (last 24 hours), slowest queues by processing time, most active services, and conversation age distribution.
+7.5 Alert rules configuration with definable thresholds for queue depth, message age, error rate, and poison message count, with actions on alert (email, webhook, Slack integration).
+7.6 Health check actions to verify Service Broker is enabled on all databases, check for orphaned conversations, scan for messages older than a configurable number of days, verify all services have valid queues, check contract validity, and validate message type definitions.
+
+
+USER ROLES AND MODES
+8.1 Simple Mode for operators showing dashboard only, queue overview without technical details, message count and status, no send/receive/delete capabilities, and diagnostic alerts only.
+8.2 Advanced Mode for developers and DBAs with all screens available, full control (send, receive, purge, pause), access to raw message bodies, technical diagnostics, conversation tracing, and poison message handling.
+8.3 Mode switching available in the settings menu.
+
+
+BACKEND API ENDPOINTS
+9.1 Queue Management: List all queues with statistics, get queue details, get messages from a queue (paginated and non-destructive), send message to a queue, pause queue, resume queue, purge queue with confirmation.
+9.2 Message Operations: Get message details for a specific conversation handle, receive and process messages from a queue, retry failed messages, get full conversation trace with timeline.
+9.3 Poison Messages and Dead-Letter: List poison messages with errors, list dead-lettered messages, retry poison messages, purge poison messages.
+9.4 Services and Metadata: List all services, get service details with associated queues, get contracts available for a service, list all message types with validation rules.
+9.5 Diagnostics: Get Service Broker health status, view in-flight messages in the transmission queue, view dialog errors and conversation issues, get performance metrics, run full system diagnostic health check.
+
+
+BACKEND ARCHITECTURE
+10.1 Three-layer architecture with API Controllers handling HTTP requests, a Service Layer for business logic, and a Data Access Layer (repositories) for database queries using SQL Server system views.
+10.2 Background services for real-time metric collection and health monitoring.
+10.3 WebSocket hub for pushing real-time updates to the frontend.
+
+
+DATABASE ADDITIONS
+11.1 Dead-Letter Queue table to store permanently failed messages with conversation handle, message type, message body, error message, retry count, max retries, timestamps, and resolution tracking. This is required because Service Broker does not have a built-in dead-letter queue.
+11.2 Message Audit Trail table (optional) to log all send and receive operations for post-incident analysis.
+11.3 Performance Monitoring table (optional) to store collected metrics like queue depth, message rate, average processing time, and error count.
+11.4 Stored procedures for sending messages, receiving messages, diagnostics, and queue management.
+
+
+DEPLOYMENT PLAN
+12.1 Phase 1 through 5: Build as a standalone application with Angular frontend and .NET Core API as separate deployments.
+12.2 Phase 6 and beyond: After the standalone version is proven, plan integration into existing applications as a feature module (Angular lazy-loaded module and .NET Core library).
+12.3 Standalone deployment has the Angular SPA on a web server, the .NET Core API on an app server, and SQL Server on-premises with Service Broker enabled.
+12.4 Development environment uses local SQL Server Express, API on port 5000, and Angular on port 4200.
+12.5 Staging and production deployments use IIS with HTTPS, dedicated app pools, and production SQL Server with full database initialization scripts.
+
+
+DATABASE INITIALIZATION STEPS
+13.1 Enable Service Broker on the target database.
+13.2 Create message types for request, response, and error messages.
+13.3 Create a contract defining which message types flow in which direction.
+13.4 Create services and queues with activation settings.
+13.5 Create the Dead-Letter Queue table with indexes.
+13.6 Create the Message Audit table (optional).
+13.7 Create stored procedures for message operations.
+13.8 Create the Performance Monitoring table (optional).
+13.9 Run a verification script to confirm everything is set up correctly.
+
+
+MONITORING AND ALERTING
+14.1 Queue depth monitoring with warning at 500 messages and critical at 1000 messages.
+14.2 Message age monitoring with warning at 1 minute and critical at 5 minutes.
+14.3 Poison message monitoring with any poison message triggering a critical alert.
+14.4 Queue status monitoring with any disabled queue triggering a critical alert.
+14.5 Background health monitor service running periodic checks and sending alerts via email or Slack.
+
+
+EXTERNAL APPLICATION INTEGRATION
+19.1 The Message Bus (UI + API + SQL Server) is a completely independent standalone project. External applications do not connect to SQL Server directly. All external applications connect only through the Message Bus API over HTTP.
+19.2 Any application that wants to publish or subscribe to messages will call the Message Bus REST API endpoints using an API key for authentication. The external application does not need to know anything about Service Broker, queues, contracts, or conversations.
+19.3 An application registration screen will be added to the Message Bus UI where an administrator can register a new application (for example LogNexus DMZ API), generate an API key for it, and define which queues it is allowed to publish to or subscribe from.
+19.4 For .NET applications, a NuGet client library will be provided. For Angular or JavaScript or TypeScript applications, an npm client package will be provided. For any other language like Python or Java, the application can call the Message Bus REST API directly over HTTP without any SDK.
+
+
+PACKAGING
+20.1 NuGet Package (for .NET applications): A NuGet package named MessageBus.Client will be created and published to the internal NuGet feed. Any .NET application can install this package using Install-Package MessageBus.Client. The package contains C# classes that wrap HTTP calls to the Message Bus API. The developer registers the client in their Startup.cs or Program.cs by providing the Message Bus API URL and the API key. After that the developer can publish and subscribe to messages using simple method calls without writing any HTTP code.
+20.2 npm Package (for Angular, JavaScript, and TypeScript applications): An npm package named @yourorg/messagebus-client will be created and published to the internal npm registry. Any Angular or JavaScript or TypeScript application can install this package using npm install @yourorg/messagebus-client. The package contains TypeScript classes that wrap HTTP calls to the Message Bus API. The developer configures the client by providing the Message Bus API URL and the API key. After that the developer can publish and subscribe to messages using simple method calls without writing any HTTP code.
+20.3 Direct HTTP (for all other languages): Applications written in Python, Java, Go, or any other language can call the Message Bus REST API directly over HTTP. No SDK or package is needed. The application sends standard HTTP requests with the API key in the request header and JSON in the request body. The REST API documentation will be provided for this purpose.
+
+
+OPERATIONAL RUNBOOKS
+15.1 Runbook for queue disabled due to poison message covering how to identify the issue, analyze the error, fix the consuming service, retry or purge the poison message, and verify the queue is processing again.
+15.2 Runbook for messages stuck in the transmission queue covering how to check target service connectivity and monitor for automatic retry.
+15.3 Runbook for consumer service crash with queue backup covering how to restart the consumer, verify messages are being consumed, and investigate root cause.
+15.4 Runbook for test message publishing covering step-by-step instructions to send a test message and verify it is processed.
+15.5 Runbook for high-volume testing covering bulk send setup, real-time monitoring, and expected results.

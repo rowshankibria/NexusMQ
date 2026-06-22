@@ -1,0 +1,149 @@
+<div class="queue-detail" *ngIf="queue">
+  <div class="queue-detail__header">
+    <div class="queue-detail__title-section">
+      <h2 class="queue-detail__title">{{ queue.displayName }}</h2>
+      <span class="queue-detail__queue-name">{{ queue.queueName }}</span>
+    </div>
+    <app-status-badge
+      [status]="queue.status"
+      [size]="'medium'"
+      [showIcon]="true"
+    ></app-status-badge>
+  </div>
+
+  <div class="queue-detail__section">
+    <h3 class="section-title">Configuration</h3>
+    <div class="config-grid">
+      <div class="config-item">
+        <span class="config-label">Service Name</span>
+        <span class="config-value">{{ queue.serviceName || '-' }}</span>
+      </div>
+      <div class="config-item">
+        <span class="config-label">Queue Name</span>
+        <span class="config-value">{{ queue.queueName }}</span>
+      </div>
+      <div class="config-item">
+        <span class="config-label">Max Readers</span>
+        <span class="config-value">{{ queue.maxReaders || '-' }}</span>
+      </div>
+      <div class="config-item">
+        <span class="config-label">Activation</span>
+        <span class="config-value" [class.config-value--disabled]="!queue.isActivationEnabled">
+          {{ getActivationLabel() }}
+        </span>
+      </div>
+      <div class="config-item">
+        <span class="config-label">Receive Status</span>
+        <span class="config-value" [class.config-value--enabled]="queue.isReceiveEnabled" [class.config-value--disabled]="!queue.isReceiveEnabled">
+          {{ getReceiveStatusLabel() }}
+        </span>
+      </div>
+      <div class="config-item">
+        <span class="config-label">Enqueue Status</span>
+        <span class="config-value" [class.config-value--enabled]="queue.isEnqueueEnabled" [class.config-value--disabled]="!queue.isEnqueueEnabled">
+          {{ getEnqueueStatusLabel() }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="queue-detail__section">
+    <h3 class="section-title">Statistics</h3>
+    <div class="stats-grid">
+      <app-metric-card
+        label="Total Messages"
+        [value]="queue.messageCount"
+        icon="📨"
+        [variant]="queue.messageCount > 0 ? 'info' : 'default'"
+      ></app-metric-card>
+
+      <app-metric-card
+        label="Poison Messages"
+        [value]="queue.poisonMessageCount"
+        icon="☠️"
+        [variant]="queue.poisonMessageCount > 0 ? 'danger' : 'default'"
+      ></app-metric-card>
+
+      <app-metric-card
+        label="Oldest Message"
+        [value]="formatAge(queue.oldestMessageAge)"
+        icon="⏱️"
+        [variant]="queue.oldestMessageAge && queue.oldestMessageAge > 3600 ? 'warning' : 'default'"
+      ></app-metric-card>
+
+      <app-metric-card
+        label="Avg Message Age"
+        [value]="formatAge(queue.averageMessageAge)"
+        icon="📊"
+        variant="default"
+      ></app-metric-card>
+
+      <app-metric-card
+        label="Throughput"
+        [value]="formatThroughput(queue.throughputPerMinute)"
+        icon="📈"
+        variant="default"
+      ></app-metric-card>
+    </div>
+  </div>
+
+  <div class="queue-detail__section" *ngIf="statistics">
+    <h3 class="section-title">Message Breakdown</h3>
+    <div class="message-breakdown">
+      <div class="breakdown-item">
+        <span class="breakdown-label">Ready</span>
+        <div class="breakdown-bar-container">
+          <div class="breakdown-bar breakdown-bar--ready" [style.width.%]="statistics.totalMessages > 0 ? (statistics.readyMessages / statistics.totalMessages) * 100 : 0"></div>
+        </div>
+        <span class="breakdown-value">{{ statistics.readyMessages }}</span>
+      </div>
+      <div class="breakdown-item">
+        <span class="breakdown-label">Retained</span>
+        <div class="breakdown-bar-container">
+          <div class="breakdown-bar breakdown-bar--retained" [style.width.%]="statistics.totalMessages > 0 ? (statistics.retainedMessages / statistics.totalMessages) * 100 : 0"></div>
+        </div>
+        <span class="breakdown-value">{{ statistics.retainedMessages }}</span>
+      </div>
+      <div class="breakdown-item">
+        <span class="breakdown-label">Received</span>
+        <div class="breakdown-bar-container">
+          <div class="breakdown-bar breakdown-bar--received" [style.width.%]="statistics.totalMessages > 0 ? (statistics.receivedMessages / statistics.totalMessages) * 100 : 0"></div>
+        </div>
+        <span class="breakdown-value">{{ statistics.receivedMessages }}</span>
+      </div>
+      <div class="breakdown-item">
+        <span class="breakdown-label">Poison</span>
+        <div class="breakdown-bar-container">
+          <div class="breakdown-bar breakdown-bar--poison" [style.width.%]="statistics.totalMessages > 0 ? (statistics.poisonMessages / statistics.totalMessages) * 100 : 0"></div>
+        </div>
+        <span class="breakdown-value">{{ statistics.poisonMessages }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="queue-detail__section" *ngIf="statistics">
+    <h3 class="section-title">Processing Metrics</h3>
+    <div class="processing-metrics">
+      <div class="metric-row">
+        <span class="metric-label">Messages Received/min</span>
+        <span class="metric-value">{{ statistics.messagesReceivedPerMinute | number:'1.1-1' }}</span>
+      </div>
+      <div class="metric-row">
+        <span class="metric-label">Messages Sent/min</span>
+        <span class="metric-value">{{ statistics.messagesSentPerMinute | number:'1.1-1' }}</span>
+      </div>
+      <div class="metric-row" *ngIf="statistics.averageProcessingTime !== null">
+        <span class="metric-label">Avg Processing Time</span>
+        <span class="metric-value">{{ statistics.averageProcessingTime | number:'1.0-0' }} ms</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="queue-detail queue-detail--empty" *ngIf="!queue">
+  <div class="empty-state">
+    <span class="empty-icon">📋</span>
+    <h3 class="empty-title">No Queue Selected</h3>
+    <p class="empty-text">Select a queue from the list to view its details</p>
+  </div>
+</div>

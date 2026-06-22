@@ -1,0 +1,37 @@
+<div class="queue-health-grid">
+  <div class="queue-health-grid__header">
+    <h3 class="queue-health-grid__title">Queue Health</h3>
+    <div class="queue-health-grid__summary">
+      <span class="queue-health-grid__badge queue-health-grid__badge--healthy">
+        {{ healthySummary.healthy }} Healthy
+      </span>
+      <span class="queue-health-grid__badge queue-health-grid__badge--warning" *ngIf="healthySummary.warning > 0">
+        {{ healthySummary.warning }} Warning
+      </span>
+      <span class="queue-health-grid__badge queue-health-grid__badge--critical" *ngIf="healthySummary.critical > 0">
+        {{ healthySummary.critical }} Critical
+      </span>
+    </div>
+  </div>
+
+  <div class="queue-health-grid__content">
+    <ng-container *ngIf="!loading && queues.length > 0; else emptyOrLoading">
+      <div class="queue-health-grid__grid">
+        <app-queue-health-card
+          *ngFor="let queue of sortedQueues; trackBy: trackByQueueName"
+          [queue]="queue"
+        ></app-queue-health-card>
+      </div>
+    </ng-container>
+
+    <ng-template #emptyOrLoading>
+      <div class="queue-health-grid__empty" *ngIf="!loading">
+        <span class="queue-health-grid__empty-icon">📭</span>
+        <span class="queue-health-grid__empty-text">No queues found</span>
+      </div>
+      <div class="queue-health-grid__loading" *ngIf="loading">
+        <app-loading-spinner size="medium" message="Loading queues..."></app-loading-spinner>
+      </div>
+    </ng-template>
+  </div>
+</div>

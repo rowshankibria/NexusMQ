@@ -1,0 +1,156 @@
+<div class="poison-messages">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Poison Message Manager</h1>
+      <p class="subtitle">Manage failed messages and dead-letter queue</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-secondary" (click)="onRefresh()" [disabled]="state?.loading">
+        ↻ Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Error Banner -->
+  <div class="error-banner" *ngIf="state?.error">
+    <span class="error-icon">⚠</span>
+    <span class="error-message">{{ state.error }}</span>
+    <button class="dismiss-btn" (click)="onDismissError()">✕</button>
+  </div>
+
+  <!-- Stats Summary -->
+  <div class="stats-summary" *ngIf="state?.stats">
+    <app-metric-card
+      label="Poison Messages"
+      [value]="state.stats.totalPoisonMessages"
+      icon="☠"
+      variant="danger"
+    ></app-metric-card>
+    <app-metric-card
+      label="Dead-Letter"
+      [value]="state.stats.totalDeadLetterMessages"
+      icon="📪"
+      variant="warning"
+    ></app-metric-card>
+    <app-metric-card
+      label="Awaiting Retry"
+      [value]="state.stats.messagesAwaitingRetry"
+      icon="⏳"
+      variant="info"
+    ></app-metric-card>
+    <app-metric-card
+      label="Affected Queues"
+      [value]="state.stats.queuesWithPoisonMessages"
+      icon="📋"
+      variant="default"
+    ></app-metric-card>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs-container">
+    <div class="tabs">
+      <button
+        class="tab"
+        [class.active]="state?.activeTab === 'poison'"
+        (click)="setActiveTab('poison')"
+      >
+        Poison Messages
+        <span class="badge" *ngIf="state?.stats?.totalPoisonMessages">
+          {{ state.stats.totalPoisonMessages }}
+        </span>
+      </button>
+      <button
+        class="tab"
+        [class.active]="state?.activeTab === 'dead-letter'"
+        (click)="setActiveTab('dead-letter')"
+      >
+        Dead-Letter Queue
+        <span class="badge" *ngIf="state?.stats?.totalDeadLetterMessages">
+          {{ state.stats.totalDeadLetterMessages }}
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Tab Content -->
+  <div class="tab-content">
+    <!-- Loading State -->
+    <div class="loading-container" *ngIf="state?.loading && !state?.poisonMessages?.length && !state?.deadLetterMessages?.length">
+      <app-loading-spinner size="large"></app-loading-spinner>
+      <span>Loading messages...</span>
+    </div>
+
+    <!-- Poison Messages Tab -->
+    <app-poison-message-list
+      *ngIf="state?.activeTab === 'poison'"
+      [messages]="state?.poisonMessages || []"
+      [selectedMessages]="state?.selectedMessages || []"
+      [loading]="state?.loading || false"
+      [filter]="state?.poisonFilter || null"
+      [queueNames]="queueNames"
+      [messageTypes]="messageTypes"
+      [totalItems]="state?.totalPoisonMessages || 0"
+      [currentPage]="state?.currentPage || 0"
+      [pageSize]="state?.pageSize || 25"
+      (messageSelected)="onPoisonMessageSelected($event)"
+      (messageToggled)="onPoisonMessageToggled($event)"
+      (selectAll)="onPoisonSelectAll()"
+      (deselectAll)="onPoisonDeselectAll()"
+      (filterChanged)="onPoisonFilterChanged($event)"
+      (filterReset)="onPoisonFilterReset()"
+      (pageChanged)="onPoisonPageChanged($event)"
+      (pageSizeChanged)="onPoisonPageSizeChanged($event)"
+      (retryMessage)="onRetryMessage($event)"
+      (purgeMessage)="onPurgeMessage($event)"
+      (bulkRetry)="onBulkRetry($event)"
+      (bulkPurge)="onBulkPurge($event)"
+    ></app-poison-message-list>
+
+    <!-- Dead-Letter Tab -->
+    <app-dead-letter-list
+      *ngIf="state?.activeTab === 'dead-letter'"
+      [messages]="state?.deadLetterMessages || []"
+      [selectedMessages]="state?.selectedDeadLetters || []"
+      [loading]="state?.loading || false"
+      [filter]="state?.deadLetterFilter || null"
+      [queueNames]="queueNames"
+      [messageTypes]="messageTypes"
+      [totalItems]="state?.totalDeadLetterMessages || 0"
+      [currentPage]="state?.currentPage || 0"
+      [pageSize]="state?.pageSize || 25"
+      (messageSelected)="onDeadLetterSelected($event)"
+      (messageToggled)="onDeadLetterToggled($event)"
+      (selectAll)="onDeadLetterSelectAll()"
+      (deselectAll)="onDeadLetterDeselectAll()"
+      (filterChanged)="onDeadLetterFilterChanged($event)"
+      (filterReset)="onDeadLetterFilterReset()"
+      (pageChanged)="onDeadLetterPageChanged($event)"
+      (pageSizeChanged)="onDeadLetterPageSizeChanged($event)"
+      (resolveMessage)="onResolveDeadLetter($event)"
+    ></app-dead-letter-list>
+  </div>
+
+  <!-- Detail Panel -->
+  <app-poison-message-detail
+    [poisonMessage]="state?.selectedPoisonMessage || null"
+    [deadLetterMessage]="state?.selectedDeadLetterMessage || null"
+    [loading]="state?.detailLoading || false"
+    [operationLoading]="state?.operationLoading || false"
+    (close)="onCloseDetail()"
+    (retry)="onRetryFromDetail($event)"
+    (purge)="onPurgeFromDetail($event)"
+    (reEnableQueue)="onReEnableQueue($event)"
+  ></app-poison-message-detail>
+
+  <!-- Confirmation Dialog -->
+  <app-confirm-dialog
+    [isOpen]="showConfirmDialog"
+    [title]="confirmDialogTitle"
+    [message]="confirmDialogMessage"
+    [type]="confirmDialogType"
+    [loading]="state?.operationLoading || false"
+    (confirm)="onConfirmAction()"
+    (cancel)="onCancelAction()"
+  ></app-confirm-dialog>
+</div>

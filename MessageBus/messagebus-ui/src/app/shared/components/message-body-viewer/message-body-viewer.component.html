@@ -1,0 +1,66 @@
+<div class="message-body-viewer">
+  <!-- Toolbar -->
+  <div class="viewer-toolbar">
+    <div class="view-modes">
+      <button
+        class="mode-btn"
+        [class.active]="viewMode === 'formatted'"
+        (click)="setViewMode('formatted')"
+        title="Formatted view"
+      >
+        Formatted
+      </button>
+      <button
+        class="mode-btn"
+        [class.active]="viewMode === 'raw'"
+        (click)="setViewMode('raw')"
+        title="Raw view"
+      >
+        Raw
+      </button>
+      <button
+        class="mode-btn"
+        [class.active]="viewMode === 'hex'"
+        (click)="setViewMode('hex')"
+        title="Hex view"
+      >
+        Hex
+      </button>
+    </div>
+
+    <div class="viewer-info">
+      <span class="content-type">{{ contentType | uppercase }}</span>
+      <span class="size">{{ formatBytes(byteSize) }}</span>
+    </div>
+
+    <div class="viewer-actions">
+      <button
+        class="action-btn"
+        (click)="copyToClipboard()"
+        [disabled]="isEmpty"
+        title="Copy to clipboard"
+      >
+        <span *ngIf="!copied">📋 Copy</span>
+        <span *ngIf="copied">✓ Copied!</span>
+      </button>
+      <button
+        class="action-btn"
+        (click)="exportToFile()"
+        [disabled]="isEmpty"
+        title="Export to file"
+      >
+        💾 Export
+      </button>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="viewer-content" [ngClass]="'content-' + contentType">
+    <div class="empty-state" *ngIf="isEmpty">
+      <span class="empty-icon">📭</span>
+      <p>No message body content</p>
+    </div>
+
+    <pre *ngIf="!isEmpty" [class.hex-view]="viewMode === 'hex'">{{ displayContent }}</pre>
+  </div>
+</div>

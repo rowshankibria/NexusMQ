@@ -1,0 +1,166 @@
+<div class="dialog-errors">
+  <div class="panel-header">
+    <h2>Dialog Endpoint Errors</h2>
+    <span class="error-count" [class.has-errors]="errors.length > 0">
+      {{ errors.length }} errors
+    </span>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <div class="filter-group">
+      <label>Service Name</label>
+      <input
+        type="text"
+        class="filter-input"
+        placeholder="Filter by service..."
+        [value]="filter?.serviceName || ''"
+        (input)="onServiceNameChange($any($event.target).value)">
+    </div>
+
+    <div class="filter-group">
+      <label>Min. Error Age (min)</label>
+      <input
+        type="number"
+        class="filter-input"
+        min="0"
+        [value]="filter?.minAgeMinutes || 0"
+        (input)="onMinAgeChange($any($event.target).valueAsNumber || 0)">
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="errors.length === 0 && !loading">
+    <span class="empty-icon">✓</span>
+    <p>No dialog errors</p>
+    <span class="empty-hint">All service conversations are healthy</span>
+  </div>
+
+  <!-- Table -->
+  <div class="table-container" *ngIf="errors.length > 0">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Conversation Handle</th>
+          <th>Initiator Service</th>
+          <th>Target Service</th>
+          <th>Error</th>
+          <th>Dialog State</th>
+          <th>Time Since Error</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let error of errors; trackBy: trackByError">
+          <td class="handle-cell">
+            <span class="handle-text">{{ error.conversationHandle | slice:0:12 }}...</span>
+          </td>
+          <td class="service-cell">
+            <span class="service-name">{{ error.initiatorServiceName }}</span>
+          </td>
+          <td class="service-cell">
+            <span class="service-name">{{ error.targetServiceName }}</span>
+          </td>
+          <td class="error-cell">
+            <div class="error-info">
+              <span class="error-code" *ngIf="error.errorCode">Code: {{ error.errorCode }}</span>
+              <span class="error-desc" [title]="error.errorDescription">
+                {{ error.errorDescription | slice:0:60 }}{{ error.errorDescription.length > 60 ? '...' : '' }}
+              </span>
+            </div>
+          </td>
+          <td>
+            <span class="state-badge" [ngClass]="getDialogStateClass(error.dialogState)">
+              {{ error.dialogState }}
+            </span>
+          </td>
+          <td class="duration-cell" [class.long]="error.timeSinceErrorMinutes > 60">
+            {{ formatDuration(error.timeSinceErrorMinutes) }}
+          </td>
+          <td class="actions-cell">
+            <button class="btn-action btn-view" (click)="viewDetails(error)" title="View Details">
+              👁
+            </button>
+            <button class="btn-action btn-end" (click)="endConversation(error)" title="End Conversation">
+              ⏹
+            </button>
+            <button class="btn-action btn-delete" (click)="deleteError(error)" title="Delete">
+              🗑
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Detail Modal -->
+  <div class="modal-overlay" *ngIf="showDetailModal" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Dialog Error Details</h3>
+        <button class="btn-close" (click)="closeModal()">×</button>
+      </div>
+      <div class="modal-body" *ngIf="selectedError">
+        <div class="detail-section">
+          <h4>Conversation Information</h4>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="detail-label">Conversation Handle</span>
+              <span class="detail-value monospace">{{ selectedError.conversationHandle }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Dialog State</span>
+              <span class="detail-value">
+                <span class="state-badge" [ngClass]="getDialogStateClass(selectedError.dialogState)">
+                  {{ selectedError.dialogState }}
+                </span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h4>Services</h4>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="detail-label">Initiator Service</span>
+              <span class="detail-value">{{ selectedError.initiatorServiceName }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Target Service</span>
+              <span class="detail-value">{{ selectedError.targetServiceName }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section error-section">
+          <h4>Error Information</h4>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="detail-label">Error Code</span>
+              <span class="detail-value">{{ selectedError.errorCode || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Error Time</span>
+              <span class="detail-value">{{ selectedError.errorTime | date:'medium' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Time Since Error</span>
+              <span class="detail-value">{{ formatDuration(selectedError.timeSinceErrorMinutes) }}</span>
+            </div>
+          </div>
+          <div class="error-description">
+            <span class="detail-label">Error Description</span>
+            <p class="error-text">{{ selectedError.errorDescription }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeModal()">Close</button>
+        <button class="btn btn-danger" (click)="endConversation(selectedError!); closeModal()">
+          End Conversation
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
